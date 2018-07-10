@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------------------------------/
-| Program : ApplicationSpecificInfoUpdateBefore3.0.js
+| Program : ApplicationSpecificInfoUpdateBefore.js
 | Event   : ApplicationSpecificInfoUpdateBefore
 |
 | Usage   : Master Script by Accela.  See accompanying documentation and release notes.
@@ -25,8 +25,8 @@ var documentOnly = false; // Document Only -- displays hierarchy of std choice s
 /*------------------------------------------------------------------------------------------------------/
 | END User Configurable Parameters
 /------------------------------------------------------------------------------------------------------*/
-var SCRIPT_VERSION = 3.0;
-var useCustomScriptFile = true;  // if true, use Events->Custom Script, else use Events->Scripts->INCLUDES_CUSTOM
+var SCRIPT_VERSION = 9.0;
+var useCustomScriptFile = true;  // if true, use Events->Custom Script and Master Scripts, else use Events->Scripts->INCLUDES_*
 var useSA = false;
 var SA = null;
 var SAScript = null;
@@ -38,6 +38,19 @@ if (bzr.getSuccess() && bzr.getOutput().getAuditStatus() != "I") {
 	if (bzr.getSuccess()) {
 		SAScript = bzr.getOutput().getDescription();
 	}
+}
+
+var controlFlagStdChoice = "EMSE_EXECUTE_OPTIONS";
+var doStdChoices = true; // compatibility default
+var doScripts = false;
+var bzr = aa.bizDomain.getBizDomain(controlFlagStdChoice).getOutput().size() > 0;
+if (bzr) {
+	var bvr1 = aa.bizDomain.getBizDomainByValue(controlFlagStdChoice, "STD_CHOICE");
+	doStdChoices = bvr1.getSuccess() && bvr1.getOutput().getAuditStatus() != "I";
+	var bvr1 = aa.bizDomain.getBizDomainByValue(controlFlagStdChoice, "SCRIPT");
+	doScripts = bvr1.getSuccess() && bvr1.getOutput().getAuditStatus() != "I";
+	var bvr3 = aa.bizDomain.getBizDomainByValue(controlFlagStdChoice, "USE_MASTER_INCLUDES");
+	if (bvr3.getSuccess()) {if(bvr3.getOutput().getDescription() == "No") useCustomScriptFile = false}; 
 }
 
 if (SA) {
@@ -59,17 +72,6 @@ if (documentOnly) {
 }
 
 var prefix = lookup("EMSE_VARIABLE_BRANCH_PREFIX", vEventName);
-
-var controlFlagStdChoice = "EMSE_EXECUTE_OPTIONS";
-var doStdChoices = true; // compatibility default
-var doScripts = false;
-var bzr = aa.bizDomain.getBizDomain(controlFlagStdChoice).getOutput().size() > 0;
-if (bzr) {
-	var bvr1 = aa.bizDomain.getBizDomainByValue(controlFlagStdChoice, "STD_CHOICE");
-	doStdChoices = bvr1.getSuccess() && bvr1.getOutput().getAuditStatus() != "I";
-	var bvr1 = aa.bizDomain.getBizDomainByValue(controlFlagStdChoice, "SCRIPT");
-	doScripts = bvr1.getSuccess() && bvr1.getOutput().getAuditStatus() != "I";
-}
 
 function getScriptText(vScriptName, servProvCode, useProductScripts) {
 	if (!servProvCode)  servProvCode = aa.getServiceProviderCode();
