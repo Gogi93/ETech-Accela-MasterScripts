@@ -9,7 +9,7 @@
 |
 /------------------------------------------------------------------------------------------------------*/
 
-var INCLUDE_VERSION = "9.3.3";
+var INCLUDE_VERSION = "3.2.2";
 
 function activateTask(wfstr) // optional process name
 {
@@ -3208,7 +3208,6 @@ function contactAddFromUser(pUserId)
 * <p>
 * Methods:
 *	toString() - Outputs a string of key contact fields 
-*   getContactName() - Returns either First Name and Last Name, Business Name, or DBA Trade Name
 *	getEmailTemplateParams(params,[vContactType]) - Contact Parameters for use in Notification Templates
 *	replace(targetCapId) - send this contact to another record, optional new contact type
 *	equals(contactObj) - Compares this contact to another contact by comparing key elements
@@ -3236,10 +3235,6 @@ function contactAddFromUser(pUserId)
 *	linkToPublicUser(pUserId) - Links the assocated reference contact to the public user account
 *	sendCreateAndLinkNotification() - Sends a Create and Link Notification using the PUBLICUSER CREATE AND LINK notification template to the contact for the scenario in AA where a paper application has been submitted
 *	getRelatedRefContacts([relConsArray]) - Returns an array of related reference contacts. An optional relationship types array can be used
-*   editName([fName], [mName], [lName], [fullName], [businessName], [dbaName]) - Edits the name fields of the contact
-*   editEmail(emailAddress) - Edits the email address of the contact
-*   editPhone([phone1],[phone2],[phone3],[fax]) - Edits the phone numbers of the contact
-*   editContactAddress(addressType, addr1, addr2, addr3, city, state, zip, phone, countryCode, primary, effectiveDate, expirationDate, [addressStatus])
 * </p>
 * <p>
 * Call Example:
@@ -3364,39 +3359,16 @@ function contactObj(ccsm)  {
         }
     }       
         this.toString = function() { return this.capId + " : " + this.type + " " + this.people.getLastName() + "," + this.people.getFirstName() + " (id:" + this.seqNumber + "/" + this.refSeqNumber + ") #ofAddr=" + this.addresses.length + " primary=" + this.primary;  }
-		
-		this.getContactName = function(){
-            var bContName = false;
-			var vContactName = "";
-			if (this.people.getLastName() != null && this.people.getFirstName() != null){
-				vContactName = this.people.getFirstName() + " " + this.people.getLastName()
-				bContName = true;
-			}
-			if(this.people.getBusinessName() != null && bContName){
-				vContactName = this.people.getBusinessName() + " - " + this.people.getFirstName() + " " + this.people.getLastName();
-			}
-			if(this.people.getBusinessName() != null && !bContName){
-				vContactName = this.people.getBusinessName();
-			}
-			if(this.people.getTradeName() != null && !bContName && this.people.getBusinessName() == null){
-				vContactName = this.people.getTradeName();
-			}
-			return vContactName;
-		}
         
         this.getEmailTemplateParams = function (params, vContactType) {
-			var contactType = "Contact";
-			var contactName = "";
-			var bContName = false;
+			var contactType = "";
 			if (arguments.length == 2) contactType = arguments[1];
 			
-            addParameter(params, "$$ContactName$$", this.getContactName());
             addParameter(params, "$$" + contactType + "LastName$$", this.people.getLastName());
             addParameter(params, "$$" + contactType + "FirstName$$", this.people.getFirstName());
             addParameter(params, "$$" + contactType + "MiddleName$$", this.people.getMiddleName());
-            addParameter(params, "$$" + contactType + "BusinessName$$", this.people.getBusinessName());
-            addParameter(params, "$$" + contactType + "TradeName$$", this.people.getTradeName());
-            addParameter(params, "$$" + contactType + "SeqNumber$$", this.seqNumber);
+            addParameter(params, "$$" + contactType + "BusinesName$$", this.people.getBusinessName());
+            addParameter(params, "$$" + contactType + "ContactSeqNumber$$", this.seqNumber);
             addParameter(params, "$$ContactType$$", this.type);
             addParameter(params, "$$" + contactType + "Relation$$", this.relation);
             addParameter(params, "$$" + contactType + "Phone1$$", this.people.getPhone1());
@@ -3725,12 +3697,12 @@ function contactObj(ccsm)  {
         }
 
         this.getCaps = function() { // option record type filter
-			var resultArray = new Array();
+
         
             if (this.refSeqNumber) {
                 aa.print("ref seq : " + this.refSeqNumber);
                 var capTypes = "*/*/*/*";
-                
+                var resultArray = new Array();
                 if (arguments.length == 1) capTypes = arguments[0];
 
                 var pm = aa.people.createPeopleModel().getOutput().getPeopleModel(); 
@@ -3826,7 +3798,7 @@ function contactObj(ccsm)  {
 			}
 			else
 			{
-			  logDebug("(contactObj.getRelatedRefLicProfObjs) Some Parameters were empty - unable to get related LPs");
+			  logDebug("**ERROR:Some Parameters are empty");
 			}
 
 		}
@@ -3875,7 +3847,7 @@ function contactObj(ccsm)  {
 			}
 			else
 			{
-			  logDebug("(contactObj.linkRefContactWithRefLicProf) Some Parameters are empty - License professional failed to link to reference contact.");
+			  logDebug("**ERROR:Some Parameters are empty");
 			}
 
 		}
@@ -3891,48 +3863,28 @@ function contactObj(ccsm)  {
                 }
             
             // addressType = one of the contact address types, or null to pull from the standard contact fields.
-            var refLicProf = getRefLicenseProf(licNum,rlpType);
-			var newLicResult = aa.proxyInvoker.newInstance("com.accela.aa.aamain.people.LicenseModel");
-			var newLic
-			if (newLicResult.getSuccess()){
-				newLic = newLicResult.getOutput();
-			}
-			else{
-				newLic = aa.licenseScript.createLicenseScriptModel();
-			}
+            var newLic = getRefLicenseProf(licNum,rlpType);
 
-            if (refLicProf) {
+            if (newLic) {
                 updating = true;
                 logDebug("(contactObj) Updating existing Ref Lic Prof : " + licNum);
-             }
+                }
+            else {
+                var newLic = aa.licenseScript.createLicenseScriptModel();
+                }
 
             peop = this.people;
             cont = this.capContact;
             if (cont.getFirstName() != null) newLic.setContactFirstName(cont.getFirstName());
             if (peop.getMiddleName() != null) newLic.setContactMiddleName(peop.getMiddleName()); // use people for this
-            if (cont.getLastName() != null)  newLic.setContactLastName(cont.getLastName());
-			if (peop.getNamesuffix() != null) newLic.setSuffixName(peop.getNamesuffix());
-			if (peop.getBirthDate() != null){ 
-				var juDate = peop.getBirthDate();
-				var sdtBirthDate = dateFormatted(1+juDate.getMonth(), juDate.getDate(), 1900+juDate.getYear(), "");
-				newLic.setBirthDate(aa.util.parseDate(sdtBirthDate));
-				logDebug("(contactObj.createRefLicProf) setBirthDate = " + sdtBirthDate);
-			}
-			if (peop.getMaskedSsn() != null) newLic.setMaskedSsn(peop.getMaskedSsn());
-			if (peop.getFein() != null) newLic.setFein(peop.getFein());
-			if (peop.getCountry() != null) newLic.setCountry(peop.getCountry());
-			if (peop.getCountryCode() != null) newLic.setCountryCode(peop.getCountryCode()); 
+            if (cont.getLastName() != null) if (peop.getNamesuffix() != null) newLic.setContactLastName(cont.getLastName() + " " + peop.getNamesuffix()); else newLic.setContactLastName(cont.getLastName());
             if (peop.getBusinessName() != null) newLic.setBusinessName(peop.getBusinessName());
             if (peop.getPhone1() != null) newLic.setPhone1(peop.getPhone1());
             if (peop.getPhone2() != null) newLic.setPhone2(peop.getPhone2());
-			if (peop.getPhone3() != null) newLic.setPhone3(peop.getPhone3())
             if (peop.getEmail() != null) newLic.setEMailAddress(peop.getEmail());
             if (peop.getFax() != null) newLic.setFax(peop.getFax());
             newLic.setAgencyCode(serv_prov_code_4_lp);
-			newLic.setServiceProviderCode(serv_prov_code_4_lp);
-            //newLic.setAuditDate(sysDate);
-			var today = new Date();
-			newLic.setAuditDate(today);
+            newLic.setAuditDate(sysDate);
             newLic.setAuditID(currentUserID);
             newLic.setAuditStatus("A");
             newLic.setLicenseType(rlpType);
@@ -3957,30 +3909,21 @@ function contactObj(ccsm)  {
             
             if (addr.getAddressLine1() != null) newLic.setAddress1(addr.getAddressLine1());
             if (addr.getAddressLine2() != null) newLic.setAddress2(addr.getAddressLine2());
-            if (addr.getAddressLine3() != null) newLic.setAddress3(addr.getAddressLine3());
+            if (addr.getAddressLine3() != null) newLic.getLicenseModel().setTitle(addr.getAddressLine3());
             if (addr.getCity() != null) newLic.setCity(addr.getCity());
             if (addr.getState() != null) newLic.setState(addr.getState());
             if (addr.getZip() != null) newLic.setZip(addr.getZip());
-            if (addr.getCountryCode() != null) newLic.setCountryCode(addr.getCountryCode());
+            if (addr.getCountryCode() != null) newLic.getLicenseModel().setCountryCode(addr.getCountryCode());
             
-			var licBusResult = aa.proxyInvoker.newInstance("com.accela.aa.aamain.people.LicenseBusiness");
-			
             if (updating){
-				newLic.setLicSeqNbr(refLicProf.getLicSeqNbr());
-				if (licBusResult.getSuccess()) {
-					var licBus = licBusResult.getOutput();
-					myResult = licBus.editLicenseByPK(newLic);
-				}				
+                myResult = aa.licenseScript.editRefLicenseProf(newLic);
+				
 			}
             else{
-				
-				if (licBusResult.getSuccess()) {
-					var licBus = licBusResult.getOutput();
-					myResult = licBus.createLicense(newLic);
-				}
-				if (myResult)
+                myResult = aa.licenseScript.createRefLicenseProf(newLic);
+				if (myResult.getSuccess())
                 {
-					var newRefLicSeqNbr = parseInt(myResult);
+					var newRefLicSeqNbr = parseInt(myResult.getOutput());
 					this.linkRefContactWithRefLicProf(licNum,rlpType,serv_prov_code_4_lp);
 				}
 			}
@@ -3989,14 +3932,14 @@ function contactObj(ccsm)  {
                 aa.resetDelegateAgencyCode();
             }
                 
-            if (myResult)
+            if (myResult.getSuccess())
                 {
                 logDebug("Successfully added/updated License No. " + licNum + ", Type: " + rlpType + " From Contact " + this);
                 return true;
                 }
             else
                 {
-                logDebug("**WARNING: can't create ref lic prof: " + myResult);
+                logDebug("**WARNING: can't create ref lic prof: " + myResult.getErrorMessage());
                 return false;
                 }
         }
@@ -4133,7 +4076,7 @@ function contactObj(ccsm)  {
                     var pinCode = v.compute(String(this.refSeqNumber));
                     addParameter(params,"$$pinCode$$",pinCode);
 
-                    sendNotification(agencyReplyEmail,toEmail,"","PUBLICUSER CREATE AND LINK",params,null);                    
+                    sendNotification(sysFromEmail,toEmail,"","PUBLICUSER CREATE AND LINK",params,null);                    
                 }
 
                                
@@ -4207,158 +4150,6 @@ function contactObj(ccsm)  {
 
             return relConsArray;
         }
-		
-		this.editName = function(fName, mName, lName, fullName, businessName, dbaName){
-				fNameStr = "" + fName;
-				if (fNameStr != "undefined") {
-					if (fNameStr == "null")
-						this.capContact.setFirstName("");
-					else
-						this.capContact.setFirstName(fNameStr);
-				}
-				lNameStr = "" + lName;
-				if (lNameStr != "undefined") {
-					if (lNameStr == "null")
-						this.capContact.setLastName("");
-					else
-						this.capContact.setLastName(lNameStr);
-				}
-				mNameStr = "" + mName;
-				if (mNameStr != "undefined") {
-					if (mNameStr == "null")
-						this.capContact.setMiddleName("");
-					else
-						this.capContact.setMiddleName(mNameStr);
-				}
-				if (matches(fullName,undefined,null,"")) {
-					if (mNameStr == "null")
-						this.capContact.setFullName(fNameStr  + " " + lNameStr);
-					else
-						this.capContact.setFullName(fNameStr + " " + mNameStr + " " + lNameStr);
-				}
-				else{
-					this.capContact.setFullName(String(fullName));
-				}
-				businessNameStr = "" + businessName;
-				if (businessNameStr != "undefined") {
-					if (businessNameStr == "null") 
-						this.capContact.setBusinessName("");
-					else
-						this.capContact.setBusinessName(businessNameStr);
-				}
-				dbaNameStr = "" + dbaName;
-				if (dbaNameStr != "undefined") {
-					if (dbaNameStr == "null") 
-						this.capContact.setTradeName("");
-					else
-						this.capContact.setTradeName(dbaNameStr);
-				}
-		}
-		
-		this.editEmail = function(emailAddress){
-			if(!matches(emailAddress,undefined,null,"")) 
-				this.capContact.setEmail(emailAddress);
-		}
-
-		this.editPhone = function(phone1,phone2,phone3,fax) {
-			if(!matches(phone1,undefined,null,"")) 
-				this.capContact.setPhone1(phone1);
-			if(!matches(phone2,undefined,null,"")) 
-				this.capContact.setPhone2(phone2);
-			if(!matches(phone3,undefined,null,"")) 
-				this.capContact.setPhone3(phone3);
-			if(!matches(fax,undefined,null,"")) 
-				this.capContact.setFax(fax);
-		}
-
-		this.editContactAddress = function(addressType, addr1, addr2, addr3, city, state, zip, phone, country, primary, effectiveDate, expirationDate, addressStatus, overwrite){
-		var casm;
-		var vOverwrite = (matches(overwrite,"N","No",false)) ? false : true;
-		
-		var contactAddressListResult = aa.address.getContactAddressListByCapContact(this.capContact);
-			if (contactAddressListResult.getSuccess()) { 
-					contactAddressList = contactAddressListResult.getOutput();
-					for (var x in contactAddressList) {
-						cal= contactAddressList[x];
-						addrType = "" + cal.getAddressType();
-							if (addrType == addressType) {
-								cResult = aa.address.getContactAddressByPK(cal.getContactAddressModel());
-								if (cResult.getSuccess()) {
-									casm = cResult.getOutput();
-									if(vOverwrite){
-										casm.setAddressLine1(addr1);
-										casm.setAddressLine2(addr2);
-										casm.setAddressLine3(addr3);
-										casm.setCity(city);
-										casm.setState(state);
-										casm.setZip(zip);
-										casm.setPhone(phone);
-										casm.setCountryCode(country);
-										if(effectiveDate) casm.setEffectiveDate(aa.util.parseDate(effectiveDate));
-										if(expirationDate) casm.setExpirationDate(aa.util.parseDate(expirationDate));
-										if(matches(primary,"Y",true,"true"))
-											casm.getContactAddressModel().setPrimary("Y");
-										if(matches(addressStatus,"I",false,"false")){
-											casm.getContactAddressModel().setStatus("I");
-										}
-										else{
-											casm.getContactAddressModel().setStatus("A");
-										}
-										editResult = aa.address.editContactAddress(casm.getContactAddressModel());
-										if (!editResult.getSuccess()) {
-										logDebug("error modifying existing address : " + editResult.getErrorMessage());
-										} else {
-										logDebug("Address updated successfully");
-										}
-									} 
-									else{
-										// update the existing address expirationDate, deactivate
-										// create a new address of the same type
-										
-										var conAdd = aa.address.createContactAddressModel().getOutput().getContactAddressModel();
-										conAdd.setEntityType("CAP_CONTACT");
-										conAdd.setEntityID(parseInt(this.capContact.getContactSeqNumber()));
-										conAdd.setAddressType("Mailing");
-										conAdd.setAddressLine1(addr1);
-										conAdd.setAddressLine2(addr2);
-										conAdd.setAddressLine3(addr3);
-										conAdd.setCity(city);
-										conAdd.setState(state);
-										conAdd.setZip(zip);
-										conAdd.setPhone(phone)
-										conAdd.setCountryCode(country);
-										if(effectiveDate){ 
-											conAdd.setEffectiveDate(aa.util.parseDate(effectiveDate));
-										}
-										else{
-											var today = dateAdd(null,0)
-											conAdd.setEffectiveDate(aa.util.parseDate(today));
-										}
-										
-										conAdd.setStatus("A");
-										
-										//Create AddressList 
-										var contactAddrModelArr = aa.util.newArrayList();
-										contactAddrModelArr.add(conAdd);
-										
-										// set the address
-										this.people.setContactAddressList(contactAddrModelArr);
-										
-										editResult = aa.address.editContactAddress(conAdd.getContactAddressModel());
-									}
-									
-									
-									
-								}
-							}
-						}	
-						convertedContactAddressList = convertContactAddressModelArr(contactAddressList);
-						this.people.setContactAddressList(convertedContactAddressList);
-			}
-
-		}
-
-		
     } 
  
 function contactSetPrimary(pContactNbr)
@@ -4512,10 +4303,6 @@ function convertDate(thisDate)
 		if (thisDate.getClass().toString().equals("class java.lang.String"))
 			{
 			return new Date(String(thisDate));
-			}
-		if (thisDate.getClass().toString().equals("class java.sql.Timestamp"))
-			{
-			return new Date(thisDate.getMonth() + "/" + thisDate.getDate() + "/" + thisDate.getYear());
 			}
 		}
 
@@ -4828,7 +4615,7 @@ function copyConditionsFromParcel(parcelIdString)
 			
 			if (!appHasCondition(thisC.getConditionType(),null,thisC.getConditionDescription(),thisC.getImpactCode()))
 				{
-				var addCapCondResult = aa.capCondition.addCapCondition(capId, thisC.getConditionType(), thisC.getConditionDescription(), thisC.getConditionComment(), thisC.getEffectDate(), thisC.getExpireDate(), sysDate, thisC.getRefNumber1(),thisC.getRefNumber2(), thisC.getImpactCode(), thisC.getIssuedByUser(), thisC.getStatusByUser(), thisC.getConditionStatus(), currentUserID, "A", thisC.getConditionStatusType(),thisC.getDisplayConditionNotice(),thisC.getIncludeInConditionName(),thisC.getIncludeInShortDescription(),thisC.getInheritable(),thisC.getLongDescripton(),thisC.getPublicDisplayMessage(),thisC.getResolutionAction(),null,null,thisC.getConditionNumber(),thisC.getConditionGroup(),thisC.getDisplayNoticeOnACA(),thisC.getDisplayNoticeOnACAFee());
+				var addCapCondResult = aa.capCondition.addCapCondition(capId, thisC.getConditionType(), thisC.getConditionDescription(), thisC.getConditionComment(), thisC.getEffectDate(), thisC.getExpireDate(), sysDate, thisC.getRefNumber1(),thisC.getRefNumber2(), thisC.getImpactCode(), thisC.getIssuedByUser(), thisC.getStatusByUser(), thisC.getConditionStatus(), currentUserID, "A")
 				if (addCapCondResult.getSuccess())
 					logDebug("Successfully added condition (" +  thisC.getImpactCode() + ") " +  thisC.getConditionDescription());
 				else
@@ -4997,29 +4784,24 @@ function copyLicensedProf(sCapId, tCapId)
 }
  
  
+
 //Function will copy all owners from source CAP (sCapID) to target CAP (tCapId)
-  function copyOwner(sCapID, tCapID)   
-  {   
-          var ownrReq = aa.owner.getOwnerByCapId(sCapID);   
-          if(ownrReq.getSuccess())   
-          {   
-            var ownrObj = ownrReq.getOutput();   
-            if(ownrObj.getSuccess()){
-                 for (xx in ownrObj)   
-                 {   
-                         ownrObj[xx].setCapID(tCapID);   
-                         aa.owner.createCapOwnerWithAPOAttribute(ownrObj[xx]);   
-                         logDebug("Copied Owner: " + ownrObj[xx].getOwnerFullName())   
-                 } 
-            }
-            else{
-                logDebug("Error Copying Owner : " + ownrObj.getErrorType() + " : " + ownrObj.getErrorMessage()); 
-            }
-          }   
-          else  { 
-                 logDebug("Warning: No owners exist to copy"); 
-            }  
-  }   
+function copyOwner(sCapID, tCapID)
+{
+	var ownrReq = aa.owner.getOwnerByCapId(sCapID);
+	if(ownrReq.getSuccess())
+	{
+		var ownrObj = ownrReq.getOutput();
+		for (xx in ownrObj)
+		{
+			ownrObj[xx].setCapID(tCapID);
+			aa.owner.createCapOwnerWithAPOAttribute(ownrObj[xx]);
+			logDebug("Copied Owner: " + ownrObj[xx].getOwnerFullName())
+		}
+	}
+	else
+		logDebug("Error Copying Owner : " + ownrObj.getErrorType() + " : " + ownrObj.getErrorMessage());
+}
  
  
 function copyOwnersByParcel()
@@ -6755,70 +6537,6 @@ function describeObject(obj2describe)
 }
  
  
-/*
- This function finds the JSON file associated to the module of the record running. 
- The naming convention for the JSON is CONFIGURABLE_RULESET_[solution/module name], 
-	for instance CONFIGURABLE_RULESET_LICENSES
- The JSON includes the scripts to be called by event for that solution/module, as an array.
- This function is called from every event Master Script. 
- Sample JSON:
- {
-  "WorkflowTaskUpdateAfter": {
-    "StandardScripts": [
-      "STDBASE_RECORD_AUTOMATION",
-      "STDBASE_INSPECTION_SCHEDULING",
-      "STDBASE_SEND_CONTACT_EMAILS"
-    ]
-  },
-  "ApplicationSubmitBefore": {
-    "StandardScripts": [
-      "STDBASE_RECORD_VALIDATION",
-      "STDBASE_ADDRESS_VALIDATION",
-      "STDBASE_PARCEL_VALIDATION"
-    ]
-  },
-  "ApplicationSubmitAfter": {
-    "StandardScripts": [
-      "STDBASE_RECORD_AUTOMATION",
-      "STDBASE_SEND_CONTACT_EMAILS"
-    ]
-  }
-}
- */
- 
-function doConfigurableScriptActions(){
-	var module = appTypeArray[0];
-	
-	rulesetName = "CONFIGURABLE_RULESET_" + module;
-	rulesetName = rulesetName.toUpperCase();
-	logDebug("rulesetName: " + rulesetName);
-	
-	 var configRuleset = getScriptText(rulesetName);
-	 if (configRuleset == ""){
-		 logDebug("No JSON file exists for this module.");
-	 }else{
-		var configJSON = JSON.parse(configRuleset);
-
-	// match event, run appropriate configurable scripts
-		settingsArray = [];
-		if(configJSON[controlString]) {
-			var ruleSetArray = configJSON[controlString];
-			var scriptsToRun = ruleSetArray.StandardScripts;
-			
-			for (s in scriptsToRun){
-				logDebug("doConfigurableScriptActions scriptsToRun[s]: " + scriptsToRun[s]);
-				var script = scriptsToRun[s];
-				var validScript = getScriptText(script);
-				if (validScript == ""){
-					logDebug("Configurable script " + script + " does not exist.");
-				}else{
-					eval(getScriptText(scriptsToRun[s]));
-				}
-			}
-		}
-	}
-} 
- 
 
 function docWrite(dstr,header,indent)
 	{
@@ -6972,32 +6690,19 @@ function editAppSpecific(itemName,itemValue)  // optional: itemCap
 		itemGroup = itemName.substr(0,itemName.indexOf("."));
 		itemName = itemName.substr(itemName.indexOf(".")+1);
 	}
-   	// change 2/2/2018 - update using: aa.appSpecificInfo.editAppSpecInfoValue(asiField)
-	// to avoid issue when updating a blank custom form via script. It was wiping out the field alias 
-	// and replacing with the field name
-	
-	var asiFieldResult = aa.appSpecificInfo.getByList(itemCap, itemName);
-	if(asiFieldResult.getSuccess()){
-		var asiFieldArray = asiFieldResult.getOutput();
-		if(asiFieldArray.length > 0){
-			var asiField = asiFieldArray[0];
-			var origAsiValue = asiField.getChecklistComment();
-			asiField.setChecklistComment(itemValue);
+   	
+   	var appSpecInfoResult = aa.appSpecificInfo.editSingleAppSpecific(itemCap,itemName,itemValue,itemGroup);
 
-			var updateFieldResult = aa.appSpecificInfo.editAppSpecInfoValue(asiField);
-			if(updateFieldResult.getSuccess()){
-				logDebug("Successfully updated custom field: " + itemName + " with value: " + itemValue);
-				if(arguments.length < 3) //If no capId passed update the ASI Array
-				AInfo[itemName] = itemValue; 
-			}
-			else
-			{ logDebug( "WARNING: " + itemName + " was not updated."); }
-		}
-	}
-	else {
-		logDebug("ERROR: " + asiFieldResult.getErrorMessage());
-	}
-} 
+	if (appSpecInfoResult.getSuccess())
+	 {
+	 	if(arguments.length < 3) //If no capId passed update the ASI Array
+	 		AInfo[itemName] = itemValue; 
+	} 	
+	else
+		{ logDebug( "WARNING: " + itemName + " was not updated."); }
+}
+
+ 
  
  function editAppSpecific4ACA(itemName, itemValue) {
 
@@ -8878,9 +8583,8 @@ function generateReport(itemCap,reportName,module,parameters) {
   var report = aa.reportManager.getReportInfoModelByName(reportName);
   report = report.getOutput();
   report.setModule(module);
-  report.setCapId(itemCap.getID1() + "-" + itemCap.getID2() + "-" + itemCap.getID3());
-  report.setReportParameters(parameters);
-  report.getEDMSEntityIdModel().setAltId(itemCap.getCustomID());
+  report.setCapId(itemCap.getCustomID());
+  report.setReportParameters(parameters); 
 
   var permit = aa.reportManager.hasPermission(reportName,user);
 
@@ -9043,30 +8747,15 @@ function genericTemplateObject(gtmp) {
 
  
  
-/**
- * Adds a parameter $$acaRecordUrl$$ to a hashtable by buiding a URL path 
- * for the record in ACA
- * 
- * @requires
- * 		addParameter()
- * 		getACARecordURL()
- *
- * @param hashtable
- *			parameters hashtable
- * @param acaUrl
- *			ACA URL Path to append
- * @param {capId}
- *			capId - optional capId object
- * @returns {string}
- *			acaUrl - URL path for the record in ACA
- *
- */
+ function getACARecordParam4Notification(params,acaUrl) {
 
-function getACARecordParam4Notification(params,acaUrl) {
+	// pass in a hashtable and it will add the additional parameters to the table
 
-	itemCap = (arguments.length == 3) ? arguments[2] : capId;
 
-	addParameter(params, "$$acaRecordUrl$$", getACARecordURL(acaUrl,itemCap));
+
+	addParameter(params, "$$acaRecordUrl$$", getACARecordURL(acaUrl));
+
+	
 
 	return params;	
 
@@ -9076,68 +8765,54 @@ function getACARecordParam4Notification(params,acaUrl) {
 
  
  
-/**
- * Builds a URL path for the record in ACA
- * Site URL
- * 
- * @param acaUrl
- *			ACA URL Path to append
- * @param {capId}
- *			capId - optional capId object
- * @returns {string}
- *			acaUrl - URL path for the record in ACA
- *
- */
- 
-function getACARecordURL(acaUrl) {
-	itemCap = (arguments.length == 2) ? arguments[1] : capId;
-	var enableCustomWrapper = lookup("ACA_CONFIGS","ENABLE_CUSTOMIZATION_PER_PAGE");
+ function getACARecordURL(acaUrl) {
+
+	
+
 	var acaRecordUrl = "";
-	var id1 = itemCap.ID1;
- 	var id2 = itemCap.ID2;
- 	var id3 = itemCap.ID3;
- 	var itemCapModel = aa.cap.getCap(itemCap).getOutput().getCapModel();
+
+	var id1 = capId.ID1;
+
+ 	var id2 = capId.ID2;
+
+ 	var id3 = capId.ID3;
+
+
 
    	acaRecordUrl = acaUrl + "/urlrouting.ashx?type=1000";   
-	acaRecordUrl += "&Module=" + itemCapModel.getModuleName();
+
+	acaRecordUrl += "&Module=" + cap.getCapModel().getModuleName();
+
 	acaRecordUrl += "&capID1=" + id1 + "&capID2=" + id2 + "&capID3=" + id3;
+
 	acaRecordUrl += "&agencyCode=" + aa.getServiceProviderCode();
-	if(matches(enableCustomWrapper,"Yes","YES")) acaRecordUrl += "&FromACA=Y";
+
+
 
    	return acaRecordUrl;
 
-} 
+}
  
-/**
- * Builds a URL path for the record in ACA that is appended to the ACA Site URL.
- * 
- * @param {capId}
- * 		capId - optional capId object
- * @returns {string}
- *		acaUrl - URL path for the record in ACA
- *
- */
-
+ 
 function getACAUrl(){
 
 	// returns the path to the record on ACA.  Needs to be appended to the site
 
-	itemCap = (arguments.length == 1) ? arguments[0] : capId;
-	var enableCustomWrapper = lookup("ACA_CONFIGS","ENABLE_CUSTOMIZATION_PER_PAGE");
+	itemCap = capId;
+	if (arguments.length == 1) itemCap = arguments[0]; // use cap ID specified in args
    	var acaUrl = "";
-	var id1 = itemCap.getID1();
-	var id2 = itemCap.getID2();
-	var id3 = itemCap.getID3();
-	var itemCapModel = aa.cap.getCap(itemCap).getOutput().getCapModel();
+	var id1 = capId.getID1();
+	var id2 = capId.getID2();
+	var id3 = capId.getID3();
+	var cap = aa.cap.getCap(capId).getOutput().getCapModel();
 
 	acaUrl += "/urlrouting.ashx?type=1000";
-	acaUrl += "&Module=" + itemCapModel.getModuleName();
+	acaUrl += "&Module=" + cap.getModuleName();
 	acaUrl += "&capID1=" + id1 + "&capID2=" + id2 + "&capID3=" + id3;
 	acaUrl += "&agencyCode=" + aa.getServiceProviderCode();
-	if(matches(enableCustomWrapper,"Yes","YES")) acaRecordUrl += "&FromACA=Y";
-
 	return acaUrl;
-} 
+	}
+ 
  
 function getAddressCountyByAddressType(aType) { //optional capId parameter
 	var itemCap = capId
@@ -11575,43 +11250,23 @@ function getProp(fString,fName)
  
  function getRecordParams4Notification(params) {
 
-	itemCapId = (arguments.length == 2) ? arguments[1] : capId;
 	// pass in a hashtable and it will add the additional parameters to the table
 
-	var itemCapIDString = itemCapId.getCustomID();
-	var itemCap = aa.cap.getCap(itemCapId).getOutput();
-	var itemCapName = itemCap.getSpecialText();
-	var itemCapStatus = itemCap.getCapStatus();
-	var itemFileDate = itemCap.getFileDate();
-	var itemCapTypeAlias = itemCap.getCapType().getAlias();
-	var itemHouseCount;
-	var itemFeesInvoicedTotal;
-	var itemBalanceDue;
+
+
+	addParameter(params, "$$altID$$", capIDString);
+
+	addParameter(params, "$$capName$$", capName);
+
+	addParameter(params, "$$capStatus$$", capStatus);
+
+	addParameter(params, "$$fileDate$$", fileDate);
+
+	//addParameter(params, "$$workDesc$$", workDescGet(capId));
+
+	addParameter(params, "$$balanceDue$$", "$" + parseFloat(balanceDue).toFixed(2));
+
 	
-	var itemCapDetailObjResult = aa.cap.getCapDetail(itemCapId);		
-	if (itemCapDetailObjResult.getSuccess())
-	{
-		itemCapDetail = capDetailObjResult.getOutput();
-		itemHouseCount = itemCapDetail.getHouseCount();
-		itemFeesInvoicedTotal = itemCapDetail.getTotalFee();
-		itemBalanceDue = itemCapDetail.getBalance();
-	}
-	
-	var workDesc = workDescGet(itemCapId);
-
-	addParameter(params, "$$altID$$", itemCapIDString);
-
-	addParameter(params, "$$capName$$", itemCapName);
-	
-	addParameter(params, "$$recordTypeAlias$$", itemCapTypeAlias);
-
-	addParameter(params, "$$capStatus$$", itemCapStatus);
-
-	addParameter(params, "$$fileDate$$", itemFileDate);
-
-	addParameter(params, "$$balanceDue$$", "$" + parseFloat(itemBalanceDue).toFixed(2));
-	
-	addParameter(params, "$$workDesc$$", (workDesc) ? workDesc : "");
 
 	return params;
 
@@ -11620,38 +11275,6 @@ function getProp(fString,fName)
 
 
  
- 
-/**
-Title : getRefAddressId
-Purpose : Look up a Reference Address ID. For use with addParcelAndOwnerFromRefAddress()
-Script Type : EMSE, Pageflow, Batch
-
-@param {capId} {capIDModel}
-@return {RefAddId}
- */
-function getRefAddressId()
-{
-    var itemCap = capId
-	if (arguments.length > 0) itemCap = arguments[0]; // use cap ID specified in args
-	var capAddrResult = aa.address.getAddressByCapId(itemCap);
-	if (capAddrResult.getSuccess())
-	{			
-		var addresses = capAddrResult.getOutput();
-			
-		for (zz in addresses)
-		{
-			var addrRefId = addresses[zz].getRefAddressId();
-			if (addrRefId==null)
-			{
-                logDebug("No reference address ID found for Address "+zz);
-			    continue;
-			}
-			else{
-                return addrRefId;
-            }
-		}
-	}
-} 
  
 /**
 Title : getRefLicenseProf
@@ -13686,8 +13309,7 @@ function licenseProfObject(licnumber, lictype) {
 			if (tmpIterator.hasNext()) {
 				var tmpAttribs = tmpIterator.next().toArray();
 				for (x in tmpAttribs) {
-					if(tmpAttribs[x].getAttributeLabel())
-						this.attribs[tmpAttribs[x].getAttributeLabel().toUpperCase()] = tmpAttribs[x];
+					this.attribs[tmpAttribs[x].getAttributeLabel().toUpperCase()] = tmpAttribs[x];
 				}
 				this.validAttrs = true;
 			}
@@ -14780,11 +14402,7 @@ function loadParcelAttributes(thisArr) {
   	
   	for (i in fcapParcelObj)
   		{
-  		// parcelArea += fcapParcelObj[i].getParcelArea()  // change requested 5/22/2017 by J.White
-		if (fcapParcelObj[i].getParcelArea()){
-				parcelArea += parseFloat(fcapParcelObj[i].getParcelArea());
-		}
-
+  		parcelArea += fcapParcelObj[i].getParcelArea()
   		parcelAttrObj = fcapParcelObj[i].getParcelAttribute().toArray();
   		for (z in parcelAttrObj)
 			thisArr["ParcelAttribute." + parcelAttrObj[z].getB1AttributeName()]=parcelAttrObj[z].getB1AttributeValue();
@@ -16540,22 +16158,12 @@ function runReport4EmailOrPrint(itemCap,reportName,conObj,rParams,eParams,emailT
 	}
 } 
  
-/**
- * Runs a report with any specified parameters and attaches it to the record
- *
- * @example
- *		runReportAttach(capId,"ReportName","altid",capId.getCustomID(),"months","12");
- *		runReportAttach(capId,"ReportName",paramHashtable);
- * @param capId
- *			itemCapId - capId object 
- * @param {report parameter pairs} or {hashtable}
- *			optional parameters are report parameter pairs or a parameters hashtable
- * @returns {boolean}
- *			if the report was generated and attached return true
- *
- */
+
 function runReportAttach(itemCapId,aaReportName)
 	{
+	// optional parameters are report parameter pairs
+	// for example: runReportAttach(capId,"ReportName","altid",capId.getCustomID(),"months","12");
+	
 
 	var reportName = aaReportName;
 
@@ -16567,46 +16175,36 @@ function runReportAttach(itemCapId,aaReportName)
 	var report = reportResult.getOutput(); 
 
 	var itemCap = aa.cap.getCap(itemCapId).getOutput();
-	itemAppTypeResult = itemCap.getCapType();
-	itemAppTypeString = itemAppTypeResult.toString(); 
-	itemAppTypeArray = itemAppTypeString.split("/");
+	appTypeResult = itemCap.getCapType();
+	appTypeString = appTypeResult.toString(); 
+	appTypeArray = appTypeString.split("/");
 
-	report.setModule(itemAppTypeArray[0]); 
+	report.setModule(appTypeArray[0]); 
 	report.setCapId(itemCapId.getID1() + "-" + itemCapId.getID2() + "-" + itemCapId.getID3()); 
 	report.getEDMSEntityIdModel().setAltId(itemCapId.getCustomID());
 
-	var parameters = aa.util.newHashMap(); 
+	var parameters = aa.util.newHashMap();              
 
-	if(arguments.length > 2 && arguments[2].getClass().toString().equals("class java.lang.String")){
-		// optional parameters are report parameter pairs
-		// for example: runReportAttach(capId,"ReportName","altid",capId.getCustomID(),"months","12");
-		for (var i = 2; i < arguments.length ; i = i+2)
+	for (var i = 2; i < arguments.length ; i = i+2)
 		{
-			parameters.put(arguments[i],arguments[i+1]);
-			logDebug("Report parameter: " + arguments[i] + " = " + arguments[i+1]);
-		}
-	}
-	else if(arguments.length > 2 && arguments[2].getClass().toString().equals("class java.util.HashMap")){
-		// optional argument is a hashmap so assign it to parameters
-		parameters = arguments[2]
-	}
+		parameters.put(arguments[i],arguments[i+1]);
+		logDebug("Report parameter: " + arguments[i] + " = " + arguments[i+1]);
+		}	
 
 	report.setReportParameters(parameters);
 
 	var permit = aa.reportManager.hasPermission(reportName,currentUserID); 
 	if(permit.getOutput().booleanValue()) 
 		{ 
-			var reportResult = aa.reportManager.getReportResult(report); 
-			if(reportResult){
-				logDebug("Report " + aaReportName + " has been run for " + itemCapId.getCustomID());
-				return true;
-			}
+		var reportResult = aa.reportManager.getReportResult(report); 
+
+		logDebug("Report " + aaReportName + " has been run for " + itemCapId.getCustomID());
+
 		}
-	else{
+	else
 		logDebug("No permission to report: "+ reportName + " for user: " + currentUserID);
-		return false;
-	}
-} 
+}
+ 
  
 /**
  * Schedule Inspection
@@ -16883,28 +16481,6 @@ function searchProject(pProjType,pSearchType)
 
 	}
 
-}
- 
- 
-/**
- * Requires parity between CONTACT TYPE and CONTACT RELATIONSHIP standard choices
- */
-function setContactRelToContactType() {
-	try {
-
-		iCont = null;
-		contactArray = new Array();
-		contactArray = getContactArray();
-		if (contactArray.length > 0) {
-			for (iCont in contactArray) {
-				tContact = contactArray[iCont];
-				aa.print("ContactName: " + tContact["firstName"] + " " + tContact["lastName"] + " " + tContact["contactType"]);
-				contactSetRelation(tContact["contactSeqNumber"], tContact["contactType"]);
-			}
-		}
-	} catch (err) {
-		logDebug("A JavaScript Error occured in setContactRelToContactType function: " + err.message + " In Line " + err.lineNumber);
-	}
 }
  
  
@@ -18368,5 +17944,4 @@ while(numZeropad.length < count) {
 numZeropad = "0" + numZeropad; 
 }
 return numZeropad;
-} 
- 
+}
