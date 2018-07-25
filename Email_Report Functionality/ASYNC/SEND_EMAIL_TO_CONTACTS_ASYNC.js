@@ -94,7 +94,7 @@ try {
 	vEParams = addStdVarsToEmail(vEParams, capId);
 
 	//Set Ad-Hoc Task Information
-	if (vAddAdHocTask) {
+	if (vAddAdHocTask == true) {
 		// Get department to assign to by module
 		vModule = getRecordsModule(capId);
 		if (vModule != null && vModule != "") {
@@ -268,7 +268,7 @@ try {
 	vAdHocNote = emailTemplate + ", " + vAdHocNote;
 
 	//Add Ad-Hoc if needed
-	if (vAddAdHocTask && conObjNonEmailArray.length > 0) {
+	if (vAddAdHocTask == true && conObjNonEmailArray.length > 0) {
 		logDebug("Adding adHoc Task for " + vAdHocNote);
 		addAdHocTaskAssignDept(vAdHocProcess, vAdHocTask, vAdHocNote, vAdHocAssignDept);
 	}

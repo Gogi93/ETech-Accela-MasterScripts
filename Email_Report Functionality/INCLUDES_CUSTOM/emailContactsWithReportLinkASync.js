@@ -29,22 +29,22 @@ function emailContactsWithReportLinkASync(pSendEmailToContactTypes, pEmailTempla
 	var vAddAdHocTask = true;
 	var vChangeReportName = "";	
 
-	if (pEParams != undefined) {
+	if (pEParams != undefined && pEParams != null && pEParams != "") {
 		logDebug("pEParams is defined");
 		vEParams = pEParams;
 	}
 	
-	if (pReportTemplate != undefined) {
+	if (pReportTemplate != undefined && pReportTemplate != null && pReportTemplate != "") {
 		logDebug("pReportTemplate is defined");
 		vReportTemplate = pReportTemplate;
 	}
 
-	if (pRParams != undefined) {
+	if (pRParams != undefined && pRParams != null && pRParams != "") {
 		logDebug("pRParams is defined");
 		vRParams = pRParams;
 	}
 	
-	if (pAddAdHocTask != undefined) {
+	if (pAddAdHocTask != undefined && pAddAdHocTask != null && pAddAdHocTask != "") {
 		logDebug("pAddAdHocTask is defined");
 		if (pAddAdHocTask == "N") {
 			vAddAdHocTask = false;
@@ -53,7 +53,7 @@ function emailContactsWithReportLinkASync(pSendEmailToContactTypes, pEmailTempla
 		}
 	}
 	
-	if (pChangeReportName != undefined) {
+	if (pChangeReportName != undefined && pChangeReportName != null && pChangeReportName != "") {
 		logDebug("pChangeReportName is defined");
 		vChangeReportName = pChangeReportName;
 	}
