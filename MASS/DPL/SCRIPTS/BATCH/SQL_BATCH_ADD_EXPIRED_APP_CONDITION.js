@@ -149,9 +149,9 @@ try
 		 
 		logDebugAndEmail("Searching for EN and LS records");
 
-		licenseRenewalProcedure.copyEMSEParameters(emseParameters, inputParameters);
+		//licenseRenewalProcedure.copyEMSEParameters(emseParameters, inputParameters);
 		ELPLogging.debug("inputParameters for Query", inputParameters);
-		licenseRenewalProcedure.setParameters(inputParameters);
+		//licenseRenewalProcedure.setParameters(inputParameters);
 
 		//var dataSet = licenseRenewalProcedure.queryProcedure();
 

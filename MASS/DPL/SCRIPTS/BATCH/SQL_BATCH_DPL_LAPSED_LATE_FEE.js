@@ -175,9 +175,9 @@ try
 	emseParameters.LICENSE_SUBTYPE = licenseSubtypeParam;
 	emseParameters.AGENCY = "DPL";
 
-	lapsedLicenseLateFeeProcedure.copyEMSEParameters(emseParameters, inputParameters);
+	//lapsedLicenseLateFeeProcedure.copyEMSEParameters(emseParameters, inputParameters);
 	ELPLogging.debug("InputParameters for Query: ", inputParameters);
-	lapsedLicenseLateFeeProcedure.setParameters(inputParameters);
+	//lapsedLicenseLateFeeProcedure.setParameters(inputParameters);
 
 	//var dataSet = lapsedLicenseLateFeeProcedure.queryProcedure();
 	var dataSet = getRecordsArray(emseParameters);

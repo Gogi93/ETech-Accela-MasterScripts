@@ -157,9 +157,9 @@ try
 	emseParameters.AGENCY = "DPL";
 	emseParameters.DAYSTOPURGE = daysToPurge;
 
-	incompleteComplaintProcedure.copyEMSEParameters(emseParameters, inputParameters);
+	//incompleteComplaintProcedure.copyEMSEParameters(emseParameters, inputParameters);
 	ELPLogging.debug("inputParameters for Query", inputParameters);
-	incompleteComplaintProcedure.setParameters(inputParameters);
+	//incompleteComplaintProcedure.setParameters(inputParameters);
 
 	//var dataSet = incompleteComplaintProcedure.queryProcedure();
 	var dataSet = getRecordsArray(emseParameters);

@@ -161,9 +161,9 @@ try
 	emseParameters.LICENSE_SUBTYPE = recordSubType;
 	emseParameters.LICENSE_CATEGORY = recordCategory;
 	
-	dplRecordProcedure.copyEMSEParameters(emseParameters, inputParameters);
+	//dplRecordProcedure.copyEMSEParameters(emseParameters, inputParameters);
 	ELPLogging.debug("InputParameters for Query", inputParameters);
-	dplRecordProcedure.setParameters(inputParameters);
+	//dplRecordProcedure.setParameters(inputParameters);
 
 	//var dataSet = dplRecordProcedure.queryProcedure();
 	var dataSet = getRecordsArray(emseParameters);

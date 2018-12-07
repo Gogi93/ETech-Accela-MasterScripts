@@ -150,9 +150,9 @@ try
 		 
 		logDebugAndEmail("Searching for RA records with 'Pending Exam' record status and over " + duration + " days since Validate/Approved for Sit status");
 
-		licenseRenewalProcedure.copyEMSEParameters(emseParameters, inputParameters);
+		//licenseRenewalProcedure.copyEMSEParameters(emseParameters, inputParameters);
 		ELPLogging.debug("inputParameters for Query", inputParameters);
-		licenseRenewalProcedure.setParameters(inputParameters);
+		//licenseRenewalProcedure.setParameters(inputParameters);
 
 		//var dataSet = licenseRenewalProcedure.queryProcedure();
 		var dataSet = getRecordsArray(emseParameters);
@@ -346,7 +346,7 @@ function getRecordsArray(emseParameters){
 			       W.status AS TASKSTATUS,  \
 			       date_assigned,  \
 			       date_due,  \
-			       date_status,  \
+			       to_char(date_status, 'yyyy/mm/dd hh24:mi:ss') as date_status,  \
 			       task_is_active,  \
 			       task_is_complete,  \
 			       days_since_assigned,  \

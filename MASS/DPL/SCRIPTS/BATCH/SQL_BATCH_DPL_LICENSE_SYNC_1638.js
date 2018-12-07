@@ -208,9 +208,9 @@ try
 		emseParameters.licenseType = licenseType;
 		
 		ELPLogging.debug("licenseType : "+licenseType+" || licenseSubType : "+licenseSubType);
-		licenseRecordProcedure.copyEMSEParameters(emseParameters, inputParameters);
+		//licenseRecordProcedure.copyEMSEParameters(emseParameters, inputParameters);
 		ELPLogging.debug("inputParameters for Query # ", inputParameters);
-		licenseRecordProcedure.setParameters(inputParameters);
+		//licenseRecordProcedure.setParameters(inputParameters);
 
 		var dataSet = getRecordsArray(emseParameters);
 		//var dataSet = licenseRecordProcedure.queryProcedure(); 

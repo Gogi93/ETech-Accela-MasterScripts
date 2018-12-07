@@ -140,9 +140,9 @@ try
 		 
 		logDebugAndEmail("Searching for HD records with 'Pending Exam' record status and over days since Validate/Approved for Sit status");
 
-		pendingExamProcedure.copyEMSEParameters(emseParameters, inputParameters);
+		//pendingExamProcedure.copyEMSEParameters(emseParameters, inputParameters);
 		ELPLogging.debug("inputParameters for Query", inputParameters);
-		pendingExamProcedure.setParameters(inputParameters);
+		//pendingExamProcedure.setParameters(inputParameters);
 
 		//var dataSet = pendingExamProcedure.queryProcedure();
 		
@@ -208,8 +208,7 @@ try
 			
 			//If an application is in the status of 'Pending Exam' for more than 2 years Then set the workflow status of the application to "Expired" and close the application
 			
-			var YrDiff = currentYr - wfYear;
-			
+			var YrDiff = currentYr - wfYear;		
 			var daysDiff = dateDifferenceForBatch(wfDateStatus, currentDate);
 			aa.print("daysDiff = "+daysDiff);
 			//if((YrDiff >= 2) && (wfMonth <= currentMonth) && (wfDay < currentDay))
@@ -328,7 +327,7 @@ function getRecordsArray(emseParameters){
 			       W.status AS TASKSTATUS, \
 			       date_assigned, \
 			       date_due, \
-			       date_status, \
+			       to_char(date_status, 'yyyy/mm/dd hh24:mi:ss') as date_status,  \
 			       task_is_active, \
 			       task_is_complete, \
 			       days_since_assigned, \

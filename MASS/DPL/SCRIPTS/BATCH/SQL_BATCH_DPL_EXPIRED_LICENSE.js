@@ -174,9 +174,9 @@ try
 	emseParameters.LICENSE_TYPE = licenseTypeParam;
 	emseParameters.LICENSE_SUBTYPE = licenseSubtypeParam;
 
-	expiredLicenseProcedure.copyEMSEParameters(emseParameters, inputParameters);
+	//expiredLicenseProcedure.copyEMSEParameters(emseParameters, inputParameters);
 	ELPLogging.debug("InputParameters for Query", inputParameters);
-	expiredLicenseProcedure.setParameters(inputParameters);
+	//expiredLicenseProcedure.setParameters(inputParameters);
 
 	//var dataSet = expiredLicenseProcedure.queryProcedure();
 

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------------------------------------------ /
-| Program : SQL_BATCH_SUSPEND_REVOKE_LIC
+| Program : BATCH_SUSPEND_REVOKE_LIC
 | Trigger : Batch
 | Client : Massachusetts
 |
@@ -24,34 +24,19 @@ var batchStartTime = batchStartDate.getTime();
 var startTime = batchStartTime;
 // Start timer
 
-var maxSeconds = 60 * 30;
 
 /*------------------------------------------------------------------------------------------------------/
 | Log Globals and Add Includes
 /------------------------------------------------------------------------------------------------------*/
 var SCRIPT_VERSION = 3.0
 
-try
-{
-	 	eval(getScriptText("INCLUDES_ACCELA_FUNCTIONS"));
-		eval(getScriptText("INCLUDES_CUSTOM"));		
-		eval(getScriptText("INCLUDES_ACCELA_GLOBALS"));
-		eval(getScriptText("EMSE_MA_INT_C_DBUTILS"));
-		eval(getScriptText("EMSE_MA_INT_C_PARAMETER"));
-		eval(getScriptText("EMSE_MA_INT_C_STOREDPROCEDURE"));
-		eval(getScriptText("EMSE_MA_INT_C_DATATYPE"));
-		eval(getScriptText("EMSE_MA_INT_C_ELPLOGGING"));
-		eval(getScriptText("EMSE_MA_INT_C_RETURNCODES"));
-		eval(getScriptText("EMSE_MA_INT_C_EMSEEXCEPTION"));
-		eval(getScriptText("EMSE_MA_INT_C_UTILITY"));
-		eval(getScriptText("INCLUDES_CUSTOM_GLOBALS"));
-}
-catch (ex)
-{
-   var returnException = new ELPAccelaEMSEException("Error Loading Scripts " + ex.message, ScriptReturnCodes.EMSE_PROCEDURE);
-   ELPLogging.fatal(returnException.toString());
-   throw returnException;
-}
+eval(getScriptText("INCLUDES_ACCELA_FUNCTIONS"));
+eval(getScriptText("INCLUDES_ACCELA_GLOBALS"));
+eval(getScriptText("INCLUDES_CUSTOM"));
+
+eval(getScriptText("INCLUDES_CUSTOM_GLOBALS"));
+eval(getScriptText("EMSE_MA_INT_C_ELPLOGGING"));
+
 
 function getScriptText(vScriptName)
 {
@@ -70,6 +55,127 @@ function getScriptText(vScriptName)
 	}
 }
 
+function updateLicenseStdCondition(licSeqNbr,type,desc,newStatus)
+{
+	var statusType = "Applied";
+	if (arguments.length > 4)
+	{
+		statusType = arguments[4];
+	}
+	condArr = aa.caeCondition.getCAEConditions(licSeqNbr).getOutput();
+	for (c in condArr)
+	{
+		if (condArr[c].getConditionDescription() == desc && condArr[c].getConditionType()== type)
+		{
+			condArr[c].setConditionStatus(newStatus);
+			condArr[c].setConditionStatusType(statusType);
+			aa.caeCondition.editCAECondition(condArr[c]);
+		}
+	}
+}
+
+function inArray(arr, obj)
+{
+	var inArr = false;
+	for (x in arr)
+	{
+		if (matches(arr[x],obj))
+		{
+			inArr=true;
+		}
+	}
+	return inArr;
+}
+
+function addLicenseStdConditionSR(licSeqNum, cType, cDesc, shortDesc)
+{
+	var foundCondition = false;
+	eDate = null;
+	var cStatus = "Applied";
+	var cStatusType = "Applied";
+	if (arguments.length > 5)
+		cStatus = arguments[5];
+	// use condition status in args
+	if (arguments.length > 6)
+		cStatusType = arguments[6];
+	// use consition status type (Applied or Not Applied) in args
+
+	if (!aa.capCondition.getStandardConditions)
+	{
+		logDebug("addLicenseStdCondition function is not available in this version of Accela Automation.");
+	}
+	else
+	{
+		standardConditions = aa.capCondition.getStandardConditions(cType, cDesc).getOutput();
+		for (i = 0; i < standardConditions.length; i ++)
+		{
+			if (standardConditions[i].getConditionType().toUpperCase() == cType.toUpperCase() && standardConditions[i].getConditionDesc().toUpperCase() == cDesc.toUpperCase()) // EMSE Dom function does like search, needed for exact match
+			{
+				standardCondition = standardConditions[i];
+				// add the last one found
+
+				foundCondition = true;
+
+				if (!licSeqNum) // add to all reference licenses on the current capId
+				{
+					var capLicenseResult = aa.licenseScript.getLicenseProf(capId);
+					if (capLicenseResult.getSuccess())
+					{
+						var refLicArr = capLicenseResult.getOutput();
+					}
+					else
+					{
+						logDebug("**ERROR: getting lic profs from Cap: " + capLicenseResult.getErrorMessage());
+						return false;
+					}
+
+					for (var refLic in refLicArr)
+					{
+						if (refLicArr[refLic].getLicenseProfessionalModel().getLicSeqNbr())
+						{
+							var licSeq = refLicArr[refLic].getLicenseProfessionalModel().getLicSeqNbr();
+							var addCAEResult = aa.caeCondition.addCAECondition(licSeq, standardCondition.getConditionType(), standardCondition.getConditionDesc(), shortDesc, null, null, standardCondition.getImpactCode(), cStatus, sysDate, eDate, sysDate, sysDate, systemUserObj, systemUserObj);
+
+							if (addCAEResult.getSuccess())
+							{
+								logDebug("Successfully added licensed professional (" + licSeq + ") condition: " + cDesc);
+								var ConditionIDNum = addCAEResult.getOutput();
+								var newCAECond = aa.caeCondition.getCAECondition(ConditionIDNum, licSeq).getOutput();
+								newCAECond.setConditionStatusType(cStatusType);
+								aa.caeCondition.editCAECondition(newCAECond);
+							}
+							else
+							{
+								logDebug( "**ERROR: adding licensed professional (" + licSeq + ") condition: " + addCAEResult.getErrorMessage());
+							}
+						}
+					}
+				}
+				else
+				{
+					var addCAEResult = aa.caeCondition.addCAECondition(licSeqNum, standardCondition.getConditionType(), standardCondition.getConditionDesc(), shortDesc, null, null, standardCondition.getImpactCode(), cStatus, sysDate, eDate, sysDate, sysDate, systemUserObj, systemUserObj);
+
+					if (addCAEResult.getSuccess())
+					{
+						logDebug("Successfully added licensed professional (" + licSeqNum + ") condition: " + cDesc);
+						var ConditionIDNum = addCAEResult.getOutput();
+
+						var newCAECond = aa.caeCondition.getCAECondition(ConditionIDNum, licSeqNum).getOutput();
+						newCAECond.setConditionStatusType(cStatusType);
+						aa.caeCondition.editCAECondition(newCAECond);
+					}
+					else
+					{
+						logDebug( "**ERROR: adding licensed professional (" + licSeqNum + ") condition: " + addCAEResult.getErrorMessage());
+					}
+				}
+			}
+		}
+	}
+	if (!foundCondition)
+		logDebug( "**WARNING: couldn't find standard condition for " + cType + " / " + cDesc);
+}
+
 
 var ToEmailAddress = lookup("BATCH_STATUS_EMAIL", "SUSPEND REVOKE"); // This email will be set by standard choice
 if (ToEmailAddress == null || ToEmailAddress == "") 
@@ -78,26 +184,6 @@ if (ToEmailAddress == null || ToEmailAddress == "")
 var emailAddress2 = getParam("emailAddress"); // This will be secondary email (as CC) set by batch job parameter
 if(emailAddress2 ==null || emailAddress2 == "" || emailAddress2 == "undefined")
  emailAddress2="";
- 
-var stagingConfigurationString = '{\
-"connectionSC": "DB_CONNECTION_INFO",\
-	"supplemental":   [{\
-				"tag":"queryLicenseSpecialText",\
-				"procedure":{\
-					"name":"ELP_SP_SUSPEND_REVOKE_QUERY",\
-					"resultSet":{"list":[\
-													 {"source":"RESULT","name":"id1","parameterType":"OUT","property":"B1_PER_ID1","type":"STRING"},\
-													 {"source":"RESULT","name":"id2","parameterType":"OUT","property":"B1_PER_ID2","type":"STRING"},\
-													 {"source":"RESULT","name":"id3","parameterType":"OUT","property":"B1_PER_ID3","type":"STRING"},\
-													 {"source":"RESULT","name":"customID","parameterType":"OUT","property":"B1_ALT_ID","type":"STRING"}]},\
-					"parameters":{"list":[\
-													 {"source":"RESULT","name":"REC_CURSOR","parameterType":"OUT","property":"REC_CURSOR","type":"RESULT_SET"}]}}}]\
-	}';
-
-
-var stagingConfiguration = datatypeHelper.loadObjectFromParameter(stagingConfigurationString);
-var jsDate = new Date();
-var capCount = 0;
 /*------------------------------------------------------------------------------------------------------/
 | Execute Script
 /------------------------------------------------------------------------------------------------------*/
@@ -107,149 +193,93 @@ logDebugAndEmail("Start of Job");
 try 
 {
 	mainProcess();
-	logDebugAndEmail("JOB COMPLETED SUCCESSFULLY");
+        logDebugAndEmail("JOB COMPLETED SUCCESSFULLY");
+     
+
 } 
+
 catch (err) 
+
 {
-	logDebugAndEmail("BATCH JOB COMPLETED WITH FOLLOWING ERRORS:" + err.message + " In " + batchJobName + " Line " + err.lineNumber);
-	logDebug("BATCH JOB COMPLETED WITH FOLLOWING ERRORS: " + err.message + " In " + batchJobName + " Line " + err.lineNumber);
-	aa.print("JOB RAN WITH ERRORS: " + err.message + " In " + "SQL_BATCH_SUSPEND_REVOKE_LIC" + " Line " + err.lineNumber);
+	
+
+        logDebugAndEmail("BATCH JOB COMPLETED WITH FOLLOWING ERRORS:" + err.message + " In " + batchJobName + " Line " + err.lineNumber);
+       	logDebug("BATCH JOB COMPLETED WITH FOLLOWING ERRORS: " + err.message + " In " + batchJobName + " Line " + err.lineNumber);
+	aa.print("JOB RAN WITH ERRORS: " + err.message + " In " + "BATCH_SUSPEND_REVOKE_LIC" + " Line " + err.lineNumber);
+
 	logDebug("Stack: " + err.stack);
 }
+
 logDebugAndEmail("End of Job: Elapsed Time : " + elapsed() + " Seconds");
 if (ToEmailAddress != null || ToEmailAddress != "") 
-	aa.sendMail(sysFromEmail, ToEmailAddress, emailAddress2, "Result: " + "SQL_BATCH_SUSPEND_REVOKE_LIC" , debugText);
+aa.sendMail(sysFromEmail, ToEmailAddress, emailAddress2, "Result: " + "BATCH_SUSPEND_REVOKE_LIC" , debugText);
 
 
 function mainProcess() 
 {
-	var dbConfiguration = getDBConnectionInfo(stagingConfiguration.connectionSC);
-	if(dbConfiguration)
+
+jsDate = new Date();
+
+//var scriptDate = aa.util.parseDate(jsDateToMMDDYYYY(jsDate));
+var capList = new Array();
+tempArr = new Array();
+
+var tempCapModel = aa.cap.getCapModel().getOutput();
+//Set the Cap Type
+var emptyCt = tempCapModel.getCapType();
+emptyCt.setGroup(null);
+emptyCt.setType(null);
+emptyCt.setSubType(null);
+emptyCt.setCategory("License");
+tempCapModel.setCapType(emptyCt);
+
+//Set Special Text
+tempCapModel.setSpecialText("Process");
+
+//get License Records
+recArr = aa.cap.getCapIDListByCapModel(tempCapModel).getOutput();
+
+aa.print("Total Number of Transaction Licenses To Be Processed: " + recArr.length);
+logDebugAndEmail("Total Number of Transaction Licenses To Be Processed: " + recArr.length);
+
+//for each license record, get the reference LP Object and add to array
+var licArr = new Array();
+var licNumArr = new Array();
+
+for (x in recArr)
+{
+	var licCapId = recArr[x].getCapID();
+	var licCapID = aa.cap.getCapID(licCapId.ID1,licCapId.ID2,licCapId.ID3).getOutput();
+	var licenseAltID = licCapID.getCustomID();
+	var refLP = getRefLicenseProf(licenseAltID);
+	if (!refLP)
+		continue;
+
+	var refLPLicenseSeqNum2 = refLP.getLicSeqNbr();
+
+	aa.print("Processing: " + licenseAltID);
+	var profArr = getLicenseProfessional(licCapID);
+
+	for (y in profArr)
 	{
-		this.stagingConfiguration.connectionInfo = dbConfiguration.connectionInfo;
-		ELPLogging.debug("ConnectionInfo", dbConfiguration.connectionInfo);
-		logDebugAndEmail("Environment serviceName: " + dbConfiguration.connectionInfo.serviceName);
-
-		// Create a connection to the Staging Table Database
-		var databaseConnection = DBUtils.connectDB(stagingConfiguration.connectionInfo);
-		/* *
-		* Obtain Stored Procedure for queryECBViolation into Staging Table
-		*/
-		var licenseSpecialTextlProcedure = null;
-		for (var ii = 0; ii < stagingConfiguration.supplemental.length; ii++ )
+		var thisLP = profArr[y];
+		var refLPLicenseSeqNum1 = thisLP.getLicenseProfessionalModel().getLicSeqNbr();
+		if (inArray(licNumArr,licenseAltID) == false && refLPLicenseSeqNum1 == refLPLicenseSeqNum2)
 		{
-			var supplementalConfiguration = stagingConfiguration.supplemental[ii];
-			if (supplementalConfiguration.tag == "queryLicenseSpecialText")
-			{
-				 var licenseSpecialTextlProcedure = new StoredProcedure(supplementalConfiguration.procedure, databaseConnection);
-			}
+			licArr.push(refLP);
+			licNumArr.push(licenseAltID);
+			aa.print("Recording: " + thisLP.getLicenseNbr());
 		}
-		if (licenseSpecialTextlProcedure == null)
+		else
 		{
-			var message = "Cannot find procedure queryLicenseSpecialText";
-			var exception = new Error(message);
-			throw exception;
+			aa.print("Dropping license duplicate/mismatch: " + thisLP.getLicenseNbr());
 		}
-		ELPLogging.debug("Found queryLicenseSpecialText: " + supplementalConfiguration.procedure.name);
+	}
+}
 
-		/* *
-		* The ECB Violation procedure returns a ResultSet of ECB Violations
-		*/
-		var staticParameters = {} ;
-		var dynamicParameters = {} ;
-		var batchApplicationResult = {};
-		licenseSpecialTextlProcedure.prepareStatement();
-		var inputParameters = licenseSpecialTextlProcedure.prepareParameters(staticParameters, dynamicParameters, batchApplicationResult);
-		var emseParameters = {};
-		//licenseSpecialTextlProcedure.copyEMSEParameters(emseParameters, inputParameters);
-		ELPLogging.debug("inputParameters for Query", inputParameters);
-		//licenseSpecialTextlProcedure.setParameters(inputParameters);
+aa.print("Total Number of Reference Licenses To Be Processed:" + licArr.length);
+logDebugAndEmail("Total Number of Reference Licenses To Be Processed:" + licArr.length);
 
-		//var dataSet = licenseSpecialTextlProcedure.queryProcedure();
-
-		//for each license record, get the reference LP Object and add to array
-		var licArr = new Array();
-		var licNumArr = new Array();		
-
-		var dataSet = getRecordsArray(emseParameters);
-		if (dataSet != false || dataSet.length > 0) 
-			for (var i in dataSet) {
-				ObjKeyRename(dataSet[i], {"B1_PER_ID1":"id1"});
-				ObjKeyRename(dataSet[i], {"B1_PER_ID2":"id2"});
-				ObjKeyRename(dataSet[i], {"B1_PER_ID3":"id3"});
-				ObjKeyRename(dataSet[i], {"B1_ALT_ID":"customID"});
-				var queryResult = dataSet[i];
-		//for (var queryResult = dataSet.next(); queryResult != null; queryResult = dataSet.next()){
-			if (elapsed() > maxSeconds) // Only continue if time hasn't expired
-			{
-				logMessage("WARNING", "A script timeout has caused partial completion of this process.  Please re-run.  " + elapsed() + " seconds elapsed, " + maxSeconds + " allowed.");
-				logDebugAndEmail("WARNING: A script timeout has caused partial completion of this process.  Please re-run.  " + elapsed() + " seconds elapsed, " + maxSeconds + " allowed.");
-				timeExpired = true;
-				break;
-			}
-
-			aa.print(queryResult.id1 + "-" + queryResult.id2 + "-" + queryResult.id3 +  " (" + queryResult.customID + ")" );
-			capIdResult = aa.cap.getCapID(queryResult.customID);
-			if ( ! capIdResult.getSuccess())
-			{
-				ELPLogging.debug("getCapID error: " + capIdResult.getErrorMessage());
-				continue;
-			}
-			
-			var licCapID = capIdResult.getOutput();
-			licCapID = aa.cap.getCapID(licCapID.ID1, licCapID.ID2, licCapID.ID3).getOutput();
-
-			var capResult = aa.cap.getCap(licCapID);
-			if ( ! capResult.getSuccess())
-			{
-				ELPLogging.debug("getCap error: " + capResult.getErrorMessage());
-				continue;
-			}
-			
-			var cap = capResult.getOutput();
-			var licenseAltID = licCapID.getCustomID();
-			var capStatus = cap.getCapStatus();
-			var appTypeResult = cap.getCapType();
-			var appTypeString = appTypeResult.toString();
-			var appTypeArray = appTypeString.split("/");
-			var board = appTypeArray[1];
-			capCount++;
-			
-			// Get Reference LP
-			var refLP = getRefLicenseProf(licenseAltID);
-			if (!refLP)
-			{
-				aa.print("Associated Ref LP not found for License:  " + licenseAltID +".Trying once agian with Licence Number and Type");
-				refLP = getRefLicenseProfWithLicNbrAndTypeClass(licenseAltID);
-				if(!refLP){
-					aa.print("Associated Ref LP not found for License:  " + licenseAltID );
-					continue;
-				}
-			}
-
-			var refLPLicenseSeqNum2 = refLP.getLicSeqNbr();
-
-			//aa.print("Processing: " + licenseAltID);
-			var profArr = getLicenseProfessional(licCapID);
-
-			for (y in profArr)
-			{
-				var thisLP = profArr[y];
-				var refLPLicenseSeqNum1 = thisLP.getLicenseProfessionalModel().getLicSeqNbr();
-				if (inArray(licNumArr,licenseAltID) == false && refLPLicenseSeqNum1 == refLPLicenseSeqNum2)
-				{
-					licArr.push(refLP);
-					licNumArr.push(licenseAltID);
-					aa.print("Recording: " + thisLP.getLicenseNbr());
-				}
-				else
-				{
-					aa.print("Dropping license duplicate/mismatch: " + thisLP.getLicenseNbr());
-				}
-			}
-		} // END OF RESULT SET LOOP
-
-		logDebugAndEmail("Total Number of Reference Licenses To Be Processed:" + licArr.length);
 
 //Loop through the licenses and apply business rules
 for (var xxLic in licArr)
@@ -305,7 +335,7 @@ for (var xxLic in licArr)
 	var PriorDiscipline = "";
 	if(peopleattribute != null && peopleattribute.length > 0)
 	{
-		//aa.print(" The People Attribute:" + peopleattribute);
+		aa.print(" The People Attribute:" + peopleattribute);
 
 		for (var J in peopleattribute)
 		{
@@ -345,7 +375,7 @@ for (var xxLic in licArr)
 	{
 		var condExpired = false;
 		var condExpDate = condArr[c].getExpireDate();
-		//aa.print(condExpDate);
+		aa.print(condExpDate);
 		if (condExpDate)
 		{
 			var jsCondExpDate = new Date(condExpDate.getMonth() + "/" + condExpDate.getDayOfMonth()+ "/" + condExpDate.getYear());
@@ -439,8 +469,7 @@ for (var xxLic in licArr)
 		//Check License Suspended
 		if (!condExpired && condArr[c].getConditionDescription() == "Stayed Suspension Condition" && (condArr[c].getConditionStatusType() == "Applied" || condArr[c].getConditionStatus() == "Applied"))
 		{
-			//Sagar : Fix EPLACE-578 - for DPL_PROD_RE/RA_Tammy DiMarzio - 9031016-Re-S
-			//alreadySuspended = true;
+			alreadySuspended = true;
 			if(ActiveConditions == null || ActiveConditions == "")
 			{
 				ActiveConditions = "Stayed Suspension";
@@ -646,7 +675,7 @@ for (var xxLic in licArr)
 		}
 
 		//If Condition is expired remove the Revocation Condition.
-		if ((condExpired && condArr[c].getConditionDescription() == "Revocation Condition" && condArr[c].getConditionStatus() != "Satisfied") ||
+		if ((condExpired && condArr[c].getConditionDescription() == "Revocation Condition") ||
 		   (condArr[c].getConditionDescription() == "Revocation Condition" &&
 		    (condArr[c].getConditionStatusType() != "Applied" &&
 		    condArr[c].getConditionStatus() != "Applied")))
@@ -991,7 +1020,7 @@ for (var xxLic in licArr)
 		y.setWcExempt("Y");
 	else
 		y.setWcExempt("N"); */
-	
+
 	//Begin Business Rules for Suspend/Revoke
 	//Perform the business rules for Suspension
 	if (suspend)
@@ -1003,12 +1032,8 @@ for (var xxLic in licArr)
 			var typeArr = aa.cap.getCap(capId).getOutput().getCapType().toString().split("/");
 			var licType = typeArr[2];
 			capModel.setCapStatus("Suspended");
-			
-			var licenseTaskStatus = getTaskStatus(capId);
-			if(licenseTaskStatus != "Suspended")
-			{
-				updateTask("License","Suspended","Suspended by Automation","");
-			}
+
+			updateTask("License","Suspended","Suspended by Automation","");
 
 			//Send Correspondence
 
@@ -1020,8 +1045,7 @@ for (var xxLic in licArr)
 	} // end suspend
 
 	//Reinstate from Suspension
-	//Fix for 8674 - Do not reinstate the license if there is at least one active suspension condition.
-	if (reinstateS && !suspend)
+	if (reinstateS)
 	{
 		aa.print("  ### Reinstating License from Suspension ###" + y.getStateLicense());
 		//Edit the Condition
@@ -1031,8 +1055,6 @@ for (var xxLic in licArr)
 		{
 			//Check for surrender
 			var TLStatus = aa.cap.getCap(capId).getOutput().getCapStatus();
-			var licenseTaskStatus = getTaskStatus(capId);
-			
 			if (TLStatus != "Voluntary Surrender")
 			{
 				// Return to good standing
@@ -1046,48 +1068,29 @@ for (var xxLic in licArr)
 					y.setAuditDate(sysDate);
 					y.setAuditID("ADMIN");
 				}
-				
+
+				updateTask("License","Current","Reinstated from Suspension by Automation","");
+
 				//Set ready for renewal if needed
 				if (jsDate > jsRenewDate && jsDate < jsExpDate)
 				{
 					capModel.setCapStatus("Current");
 					//updateTask("License","About to Expire","Reinstated from Suspension by Automation","");
-					if (TLStatus != "Current")
-					{
-						updateTask("License","Current","Reinstated from Suspension by Automation","");
-					}	
 				}
-				else if (jsDate >= jsExpDate && jsDate < jsInactiveDate)
+
+				//Set expired renewal if needed
+				if (jsDate >= jsExpDate && jsDate < jsInactiveDate)
 				{
-					//Set expired renewal if needed
+					capModel.setCapStatus("Lapsed");
+					updateTask("License","Expired","Reinstated from Suspension by Automation","");
+				}
+
+				//Set inactive if needed
+				if (jsDate >= jsInactiveDate)
+				{
 					capModel.setCapStatus("Expired");
-					
-					//var licenseTaskStatus = getTaskStatus(capId);
-					if(licenseTaskStatus != "Lapsed")
-					{
-						updateTask("License","Lapsed","Reinstated from Suspension by Automation","");
-					}
+					updateTask("License","Expired","Reinstated from Suspension by Automation","");
 				}
-				else if (jsDate >= jsInactiveDate)
-				{
-					//Set inactive if needed
-					capModel.setCapStatus("Expired");
-					//var licenseTaskStatus = getTaskStatus(capId);
-					if(licenseTaskStatus != "Expired")
-					{
-						updateTask("License","Expired","Reinstated from Suspension by Automation","");
-					}
-				}
-				else
-				{
-					if (TLStatus != "Current")
-					{
-						updateTask("License","Current","Reinstated from Suspension by Automation","");
-					}
-				}
-				//added for defect 9238
-				aa.print(ActiveConditions);
-				y.setInsuranceCo(ActiveConditions);
 			}
 		}
 	} //end reinstate
@@ -1102,12 +1105,7 @@ for (var xxLic in licArr)
 		aa.print("  Found CAP: " + capId);
 
 		capModel.setCapStatus("Revoked");
-		
-		var licenseTaskStatus = getTaskStatus(capId);
-		if(licenseTaskStatus != "Revoked")
-		{
-			updateTask("License","Revoked","Revoked by Automation","");
-		}
+		updateTask("License","Revoked","Revoked by Automation","");
 
 		//Send Correspondence
 
@@ -1122,15 +1120,12 @@ for (var xxLic in licArr)
 	{
 		aa.print("  ### Reinstating License from Revocation ###" + y.getStateLicense());
 		//Edit the Condition
-		//updateLicenseStdCondition(licArr[xxLic].getLicSeqNbr(),"Compliance","Revocation Condition","Satisfied",null);
-		updateLicenseStdCondition(licArr[xxLic].getLicSeqNbr(),"Compliance","Revocation Condition","Satisfied");
+		updateLicenseStdCondition(licArr[xxLic].getLicSeqNbr(),"Compliance","Revocation Condition","Satisfied",null);
 		//Update the transaction license
 		if (!(suspend || alreadySuspended))
 		{
 			//Check for surrender
 			var TLStatus = aa.cap.getCap(capId).getOutput().getCapStatus();
-			var licenseTaskStatus = getTaskStatus(capId);
-			
 			if (TLStatus != "Voluntary Surrender")
 			{
 				//Set the Reference License active if needed
@@ -1143,22 +1138,20 @@ for (var xxLic in licArr)
 				}
 				// Return to good standing
 				aa.print ("Return to good: " + licArr[xxLic].getStateLicense());
-				
 				capModel.setCapStatus("Current");
-				
+
+				updateTask("License","Current","Reinstated from Revocation by Automation","");
+
 				//Set ready for renewal if needed
 				if (jsDate > jsRenewDate && jsDate < jsExpDate)
 				{
 					capModel.setCapStatus("Current");
 					//updateTask("License","About to Expire","Reinstated  from Revocation by Automation","");
-					if (TLStatus != "Current")
-					{
-						updateTask("License","Current","Reinstated from Revocation by Automation","");
-					}
 				}
-				else if (jsDate >= jsExpDate && jsDate < jsInactiveDate)
+
+				//Set expired renewal if needed
+				if (jsDate >= jsExpDate && jsDate < jsInactiveDate)
 				{
-					//Set expired renewal if needed
 					//Set to expire if already lapsed once, else set to lapsed.
 					var workflowhistory = aa.workflow.getWorkflowHistory(capId, null);
 					if (workflowhistory.getSuccess())
@@ -1170,33 +1163,18 @@ for (var xxLic in licArr)
 							count++;
 					}
 					if(count>0)
-						capModel.setCapStatus("Expired");
+						capModel.setCapStatus("Lapsed");
 					else
-						capModel.setCapStatus("Expired");
-						
-					//var licenseTaskStatus = getTaskStatus(capId);
-					if(licenseTaskStatus != "Lapsed")
-					{
-						updateTask("License","Lapsed","Reinstated from Revocation by Automation","");
-					}
+						capModel.setCapStatus("Lapsed");
+					updateTask("License","Lapsed","Reinstated from Revocation by Automation","");
 				}
-				else if (jsDate >= jsInactiveDate)
+
+				//Set inactive if needed
+				if (jsDate >= jsInactiveDate)
 				{
-					//Set inactive if needed
 					capModel.setCapStatus("Expired");
-					//var licenseTaskStatus = getTaskStatus(capId);
-					if(licenseTaskStatus != "Expired")
-					{
-						updateTask("License","Expired","Reinstated from Revocation by Automation","");
-					}
+					updateTask("License","Expired","Reinstated from Revocation by Automation","");
 				}
-				else
-				{
-					if (TLStatus != "Current")
-					{
-						updateTask("License","Current","Reinstated from Revocation by Automation","");
-					}
-				}	
 			}
 		}
 		else
@@ -1218,12 +1196,7 @@ for (var xxLic in licArr)
 
 				// Return to good standing, but suspended
 				capModel.setCapStatus("Suspended");
-				
-				var licenseTaskStatus = getTaskStatus(capId);
-				if(licenseTaskStatus != "Suspended")
-				{
-					updateTask("License","Suspended","Suspended after Revocation by Automation","");
-				}
+				updateTask("License","Suspended","Suspended after Revocation by Automation","");
 			}
 		}
 	} //end reinstate
@@ -1338,18 +1311,17 @@ if (myResult.getSuccess()) {
 	// Add Transaction License to SET ID "SYNCSET"
 			//Add license to set
 		//	addTransLictoSet(capId);
+		 addToLicenseSyncSet(capId);
 
-		 addToLicenseSyncSet4Batch(capId);
+
+
+
 }
 }
- 
-} // END OF MAIN PROCESS
 
-/*------------------------------------------------------------------------------------------------------/
-| UTILITY FUNCTIONS
-/------------------------------------------------------------------------------------------------------*/
 
-function removeCsvVal(source, toRemove)              //source is a string of comma-separated values,
+
+function removeCsvVal(source, toRemove)              //source is a string of comma-seperated values,
 {                                                    //toRemove is the CSV to remove all instances of
 	var sourceArr = source.split(",");               //Split the CSV's by commas
 	var toReturn  = "";                              //Declare the new string we're going to create
@@ -1376,7 +1348,7 @@ function elapsed()
    return ((thisTime - batchStartTime) / 1000)
 }
 
-function getParam(pParamName) // gets parameter value and logs message showing param value
+ function getParam(pParamName) // gets parameter value and logs message showing param value
 {
    var ret = "" + aa.env.getValue(pParamName);
    logDebug("PARAMETER " + pParamName + " = " + ret);
@@ -1404,260 +1376,4 @@ function getInactiveDateBasedOnRenewalCycle(pCap, pExpirationDate)
 	inactiveDate.setDate(inactiveDate.getDate() + renewalCycleInDays);
 	
 	return inactiveDate;	
-}
-
-function updateLicenseStdCondition(licSeqNbr,type,desc,newStatus)
-{
-	var statusType = "Applied";
-	if (arguments.length > 4)
-	{
-		statusType = arguments[4];
-	}
-	condArr = aa.caeCondition.getCAEConditions(licSeqNbr).getOutput();
-	for (c in condArr)
-	{
-		if (condArr[c].getConditionDescription() == desc && condArr[c].getConditionType()== type)
-		{
-			condArr[c].setConditionStatus(newStatus);
-			condArr[c].setConditionStatusType(statusType);
-			aa.caeCondition.editCAECondition(condArr[c]);
-		}
-	}
-}
-
-function inArray(arr, obj)
-{
-	var inArr = false;
-	for (x in arr)
-	{
-		if (matches(arr[x],obj))
-		{
-			inArr=true;
-		}
-	}
-	return inArr;
-}
-
-function addLicenseStdConditionSR(licSeqNum, cType, cDesc, shortDesc)
-{
-	var foundCondition = false;
-	eDate = null;
-	var cStatus = "Applied";
-	var cStatusType = "Applied";
-	if (arguments.length > 5)
-		cStatus = arguments[5];
-	// use condition status in args
-	if (arguments.length > 6)
-		cStatusType = arguments[6];
-	// use consition status type (Applied or Not Applied) in args
-
-	if (!aa.capCondition.getStandardConditions)
-	{
-		logDebug("addLicenseStdCondition function is not available in this version of Accela Automation.");
-	}
-	else
-	{
-		standardConditions = aa.capCondition.getStandardConditions(cType, cDesc).getOutput();
-		for (i = 0; i < standardConditions.length; i ++)
-		{
-			if (standardConditions[i].getConditionType().toUpperCase() == cType.toUpperCase() && standardConditions[i].getConditionDesc().toUpperCase() == cDesc.toUpperCase()) // EMSE Dom function does like search, needed for exact match
-			{
-				standardCondition = standardConditions[i];
-				// add the last one found
-
-				foundCondition = true;
-
-				if (!licSeqNum) // add to all reference licenses on the current capId
-				{
-					var capLicenseResult = aa.licenseScript.getLicenseProf(capId);
-					if (capLicenseResult.getSuccess())
-					{
-						var refLicArr = capLicenseResult.getOutput();
-					}
-					else
-					{
-						logDebug("**ERROR: getting lic profs from Cap: " + capLicenseResult.getErrorMessage());
-						return false;
-					}
-
-					for (var refLic in refLicArr)
-					{
-						if (refLicArr[refLic].getLicenseProfessionalModel().getLicSeqNbr())
-						{
-							var licSeq = refLicArr[refLic].getLicenseProfessionalModel().getLicSeqNbr();
-							var addCAEResult = aa.caeCondition.addCAECondition(licSeq, standardCondition.getConditionType(), standardCondition.getConditionDesc(), shortDesc, null, null, standardCondition.getImpactCode(), cStatus, sysDate, eDate, sysDate, sysDate, systemUserObj, systemUserObj);
-
-							if (addCAEResult.getSuccess())
-							{
-								logDebug("Successfully added licensed professional (" + licSeq + ") condition: " + cDesc);
-								var ConditionIDNum = addCAEResult.getOutput();
-								var newCAECond = aa.caeCondition.getCAECondition(ConditionIDNum, licSeq).getOutput();
-								newCAECond.setConditionStatusType(cStatusType);
-								aa.caeCondition.editCAECondition(newCAECond);
-							}
-							else
-							{
-								logDebug( "**ERROR: adding licensed professional (" + licSeq + ") condition: " + addCAEResult.getErrorMessage());
-							}
-						}
-					}
-				}
-				else
-				{
-					var addCAEResult = aa.caeCondition.addCAECondition(licSeqNum, standardCondition.getConditionType(), standardCondition.getConditionDesc(), shortDesc, null, null, standardCondition.getImpactCode(), cStatus, sysDate, eDate, sysDate, sysDate, systemUserObj, systemUserObj);
-
-					if (addCAEResult.getSuccess())
-					{
-						logDebug("Successfully added licensed professional (" + licSeqNum + ") condition: " + cDesc);
-						var ConditionIDNum = addCAEResult.getOutput();
-
-						var newCAECond = aa.caeCondition.getCAECondition(ConditionIDNum, licSeqNum).getOutput();
-						newCAECond.setConditionStatusType(cStatusType);
-						aa.caeCondition.editCAECondition(newCAECond);
-					}
-					else
-					{
-						logDebug( "**ERROR: adding licensed professional (" + licSeqNum + ") condition: " + addCAEResult.getErrorMessage());
-					}
-				}
-			}
-		}
-	}
-	if (!foundCondition)
-		logDebug( "**WARNING: couldn't find standard condition for " + cType + " / " + cDesc);
-}
-
-function getTaskStatus(capId)
-{
-	var licenseTaskStatus = "";
-	var wfTaskResult = aa.workflow.getTasks(capId);
-	//var taskArray = "";
-
-	if (wfTaskResult.getSuccess()) 
-	{
-		wfTaskResult = wfTaskResult.getOutput();
-		if(wfTaskResult[0].getTaskDescription() == "License")
-		{
-			licenseTaskStatus = wfTaskResult[0].getDisposition();
-		}
-	}
-	return(licenseTaskStatus);
-}
-
-function addToLicenseSyncSet4Batch(addToSetCapId) {
-	var setCap = aa.cap.getCap(addToSetCapId).getOutput();
-
-	var setName = lookup("Lookup:LicenseSync", "SET_NAME");
-
-	if (matches(setName, null, "", undefined)) setName = "SYNCSET";
-
-	var setExists = false;
-	var setGetResult = aa.set.getSetByPK(setName);
-	if (setGetResult.getSuccess()) setExists = true;
-
-	if (!setExists) {
-			//logDebug("Set doesn't exists.");
-			setDescription = setName;
-			setType = "License Sync";
-			setStatus = "Pending";
-			setExists = createSet(setName, setDescription, setType, setStatus);
-	}
-
-	if (setExists) {
-		 // logDebug("Set exists. Adding " + addToSetCapId);
-
-			var setsMemberIsPartOf = aa.set.getSetHeadersListByMember(addToSetCapId).getOutput();
-
-			var doesExistInSync = false;
-			for (i = 0; i < setsMemberIsPartOf.size(); i++) {
-					// aa.print("Part of Set : " + setsMemberIsPartOf.get(i).getSetID());
-					if (setName == setsMemberIsPartOf.get(i).getSetID()) {
-							doesExistInSync = true;
-							aa.print("part of set - " + setsMemberIsPartOf.get(i).getSetID());
-					}
-			}
-			logDebug("doesExistInSync " + doesExistInSync);
-			if (!doesExistInSync)
-					aa.set.add(setName, addToSetCapId);
-	}
-}
-
-function getRecordsArray(emseParameters){
-	var sql = 
-			"select\
-			   b.SERV_PROV_CODE,\
-			   b.B1_PER_ID1,\
-			   b.B1_PER_ID2,\
-			   b.B1_PER_ID3,\
-			   b.B1_PER_GROUP,\
-			   b.b1_per_type,\
-			   b.b1_per_sub_type,\
-			   b.B1_PER_CATEGORY,\
-			   b.b1_alt_id,\
-			   b.B1_APPL_STATUS,\
-			   b.b1_special_text \
-			from\
-			   B1PERMIT b \
-			where\
-			   b.serv_prov_code = 'DPL' \
-			   and b.B1_PER_CATEGORY = 'License' \
-			   and b.b1_special_text = 'Process' \
-			   and b.REC_STATUS = 'A'";
-			
-			aa.print(sql);
-
-			var arr = doSQL(sql);
-			return arr;
-}
-
-function doSQL(sql) {
-
-	try {
-		var array = [];
-		var initialContext = aa.proxyInvoker.newInstance("javax.naming.InitialContext", null).getOutput();
-		var ds = initialContext.lookup("java:/AA");
-		var conn = ds.getConnection();
-		var sStmt = conn.prepareStatement(sql);
-
-		if (sql.toUpperCase().indexOf("SELECT") == 0) {
-			var rSet = sStmt.executeQuery();
-			while (rSet.next()) {
-				var obj = {};
-				var md = rSet.getMetaData();
-				var columns = md.getColumnCount();
-				for (i = 1; i <= columns; i++) {
-					obj[md.getColumnName(i)] = String(rSet.getString(md.getColumnName(i)));
-				}
-				obj.count = rSet.getRow();
-				array.push(obj);
-			}
-			rSet.close();
-			sStmt.close();
-			conn.close();
-			return array;
-		}
-	} catch (err) {
-		aa.print(err.message);
-	}
-}
-
-function ObjKeyRename(src, map) {
-    var dst = {};
-    // src --> dst
-    for(var key in src){
-        if(key in map)
-            // rename key
-            dst[map[key]] = src[key];
-        else
-            // same key
-            dst[key] = src[key];
-    }
-    // clear src
-    for(var key in src){
-        delete src[key];
-    }
-    // dst --> src
-    for(var key in dst){
-        src[key] = dst[key];
-    }
 }

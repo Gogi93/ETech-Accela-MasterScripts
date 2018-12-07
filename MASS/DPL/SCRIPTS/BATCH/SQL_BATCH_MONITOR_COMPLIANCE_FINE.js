@@ -151,9 +151,9 @@ try
 	var inputParameters = complianceProcedure.prepareParameters(staticParameters, dynamicParameters, batchApplicationResult);
 	var emseParameters = {};
 
-	complianceProcedure.copyEMSEParameters(emseParameters, inputParameters);
+	//complianceProcedure.copyEMSEParameters(emseParameters, inputParameters);
 	ELPLogging.debug("inputParameters for Query", inputParameters);
-	complianceProcedure.setParameters(inputParameters);
+	//complianceProcedure.setParameters(inputParameters);
 
 	//var dataSet = complianceProcedure.queryProcedure();
 	var dataSet = getRecordsArray(emseParameters);

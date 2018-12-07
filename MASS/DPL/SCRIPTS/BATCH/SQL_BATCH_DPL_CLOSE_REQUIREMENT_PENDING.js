@@ -139,9 +139,9 @@ try
 	var inputParameters = pendingReqProcedure.prepareParameters(staticParameters, dynamicParameters, batchApplicationResult);
 	var emseParameters = {};
 	 
-	pendingReqProcedure.copyEMSEParameters(emseParameters, inputParameters);
+	//pendingReqProcedure.copyEMSEParameters(emseParameters, inputParameters);
 	ELPLogging.debug("inputParameters for Query", inputParameters);
-	pendingReqProcedure.setParameters(inputParameters);
+	//pendingReqProcedure.setParameters(inputParameters);
 
 	//var dataSet = pendingReqProcedure.queryProcedure();
 	var dataSet = getRecordsArray(emseParameters);

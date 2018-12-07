@@ -214,9 +214,9 @@ try {
 		emseParameters.LICENSE_SUBTYPE = licenseSubtypeParam;
 		emseParameters.AGENCY = "DPL";
 
-		licenseRenewalProcedure.copyEMSEParameters(emseParameters, inputParameters);
+		//licenseRenewalProcedure.copyEMSEParameters(emseParameters, inputParameters);
 		ELPLogging.debug("inputParameters for Query", inputParameters);
-		licenseRenewalProcedure.setParameters(inputParameters);
+		//licenseRenewalProcedure.setParameters(inputParameters);
 
 		//var dataSet = licenseRenewalProcedure.queryProcedure();
 		var dataSet = getRecordsArray(emseParameters);

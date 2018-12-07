@@ -151,9 +151,9 @@ try
 	emseParameters.LICENSE_SUBTYPE = recordSubType;
 	emseParameters.LICENSE_CATEGORY = recordCategory;
 	
-	pendingExamProcedure.copyEMSEParameters(emseParameters, inputParameters);
+	//pendingExamProcedure.copyEMSEParameters(emseParameters, inputParameters);
 	ELPLogging.debug("InputParameters for Query", inputParameters);
-	pendingExamProcedure.setParameters(inputParameters);
+	//pendingExamProcedure.setParameters(inputParameters);
 
 	//var dataSet = pendingExamProcedure.queryProcedure();
 	var dataSet = getRecordsArray(emseParameters);
