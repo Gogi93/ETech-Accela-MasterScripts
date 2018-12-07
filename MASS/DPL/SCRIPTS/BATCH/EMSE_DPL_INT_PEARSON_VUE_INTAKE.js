@@ -23,6 +23,7 @@
 									  license number and license expiration date. If validation is successful, then script will create application record, associate exam record with application record, license record, reference license record, license professional in the Accela system. Add the application record into the monthly payment set. If validation fails, record will be inserted into error table and email will be triggered for any erroneous record.
 ***********************************************************************************************************************************/
 
+
 try
 {
     try
@@ -1926,17 +1927,27 @@ function emailErrorReport(dbConnection, procedureConfiguration, runDate,bCode)
 	try
 	{
 		ELPLogging.debug("*** Start getErrorReportRecords() ***");
+
+		// POC
+		var parameters = {
+            "runDate": runDate,
+            "batchInterfaceName": "ELP.PEARSONVUE.DPL.INTAKE",
+            "tableName": "ELP_VW_PSI_ERROR"
+        };
+        var dataSet = getErrorReportRecords(errorReportProcedure, parameters);
+
+		// POC        		
+		// var parameters = {};
+		// parameters.runDate = runDate;
+		// parameters.batchInterfaceName = "ELP.PEARSONVUE.INTAKE";
+		// errorReportProcedure.prepareStatement();
+		// var inputParameters = errorReportProcedure.prepareParameters(null,null,parameters);
+		// ELPLogging.debug("InputParameters for errorReportProcedure: ", inputParameters);
 		
-		var parameters = {};
-		parameters.runDate = runDate;
-		parameters.batchInterfaceName = "ELP.PEARSONVUE.INTAKE";
-		errorReportProcedure.prepareStatement();
-		var inputParameters = errorReportProcedure.prepareParameters(null,null,parameters);
-		ELPLogging.debug("InputParameters for errorReportProcedure: ", inputParameters);
-		
-		errorReportProcedure.setParameters(inputParameters);
-		var dataSet = errorReportProcedure.queryProcedure();
-		ELPLogging.debug("*** Finished getLicenseConfigurationRecords() ***");
+		// errorReportProcedure.setParameters(inputParameters);
+		// var dataSet = errorReportProcedure.queryProcedure();
+
+		ELPLogging.debug("*** Finished getErrorReportRecords() ***");
 		
 		// loop through all license configuration records
 		var licenseConfiguration = null;
@@ -4902,6 +4913,33 @@ function getStgRecords(parameters) {
         var rs = stmt.executeQuery();
 
         var queryProcedure = new StoredProcedure(selectQueryObj.selectQuery, dbConn);
+        var ds = new DataSet(rs, queryProcedure.procedure.resultSet, queryProcedure);
+
+        dataSet = ds;
+
+    } catch (ex) {
+        ELPLogging.error("**ERROR: In function " + arguments.callee.toString().match(/function ([^\(]+)/)[1] + ", line: " + ex.lineNumber + " - " + ex.message + "\r" + ex.stack);
+    }
+    return dataSet;
+}
+
+function getErrorReportRecords(queryProcedure, parameters) {
+   var dataSet = null;
+    try {
+        for (p in parameters) {
+            ELPLogging.debug("**INFO: " + p + ": " + parameters[p]);
+        }
+
+        var stmt = null;
+        var sql = "select * from " + parameters["tableName"] + " where batchInterfaceName = ? and run_date like ?";
+        stmt = dbConn.prepareStatement(sql);
+        stmt.setString(1, parameters["batchInterfaceName"]);
+        var sql_date = new java.sql.Date(parameters["runDate"].getTime());
+        stmt.setDate(2, sql_date);
+
+        ELPLogging.debug("** SQL: " + sql);
+        var rs = stmt.executeQuery();
+
         var ds = new DataSet(rs, queryProcedure.procedure.resultSet, queryProcedure);
 
         dataSet = ds;
