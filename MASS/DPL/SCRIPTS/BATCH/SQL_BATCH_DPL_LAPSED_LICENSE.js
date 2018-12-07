@@ -240,9 +240,9 @@ try
 	emseParameters.LICENSE_SUBTYPE = licenseSubtypeParam;
 	emseParameters.AGENCY = "DPL";
 
-	lapsedLicenseProcedure.copyEMSEParameters(emseParameters, inputParameters);
+	//lapsedLicenseProcedure.copyEMSEParameters(emseParameters, inputParameters);
 	ELPLogging.debug("InputParameters for Query: ", inputParameters);
-	lapsedLicenseProcedure.setParameters(inputParameters);
+	//lapsedLicenseProcedure.setParameters(inputParameters);
 
 	//var dataSet = lapsedLicenseProcedure.queryProcedure();
     var setName = lookup("Lookup:LicenseSync", "SET_NAME");
