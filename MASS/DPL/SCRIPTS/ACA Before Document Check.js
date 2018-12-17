@@ -189,14 +189,14 @@ if (appTypeResult == "License/Cosmetology/Out of State/Application") {
 	CWM_ELP_812_DPL_ACA_OutOfStateApplication();
 }
 
+//evt- Commenting out document check for EPAWS-1009 
 //Script ID: 722 - By Byellapu
 // calling one function to validate all the required documents (added by SKumar)
-if (appMatch("License/Allied Mental Health/Mental Health Counselor/Application")) {
+/*if (appMatch("License/Allied Mental Health/Mental Health Counselor/Application")) {
 	//CWM_ELP_722_DPL_checkPostMasterClinicalDoc();
 	//CWM_ELP_373_DPL_ACA_ASB_checkAHCReqDocsUploaded();
-	//evt- Commenting out document check for EPAWS-1009 
-	//CWM_ELP_720_DPL_ACA_ASB_checkAHCReqDocsUploaded();
-}
+	CWM_ELP_720_DPL_ACA_ASB_checkAHCReqDocsUploaded();
+}*/
 
 if (appMatch("License/Cosmetology/Shop/Renovation")) { 
         
