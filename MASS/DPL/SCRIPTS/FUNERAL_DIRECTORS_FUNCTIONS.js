@@ -2351,6 +2351,7 @@ function CWM_ELP_DPL_WTUB_440_LicNbrRequired(){
 		logDebug("An error occurred in CWM_ELP_DPL_440_LicNbrRequired:"+err.message);
 	}
 }
+//evt - updates for EPAWS-994
 function CWM_ELP_DPL_FuneralAsstDocCheck() {
 	try {
 		if (!docCheck("CORI Notarized Form")) {
@@ -2385,7 +2386,7 @@ function CWM_ELP_DPL_FuneralAsstDocCheck() {
 			}
 			comment("The High School Diplima must be uploaded to proceed with this application");
 		}
-		if (!docCheck("Birth Certificate")) {
+		/*if (!docCheck("Birth Certificate")) {
 			if (!cancel) {
 				cancel = true;
 			}
@@ -2393,7 +2394,7 @@ function CWM_ELP_DPL_FuneralAsstDocCheck() {
 				showMessage = true;
 			}
 			comment("The Birth Certificate must be uploaded to proceed with this application");
-		}
+		}*/
 		if (!docCheck("Sponsor Signature")) {
 			if (!cancel) {
 				cancel = true;
