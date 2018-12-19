@@ -149,7 +149,7 @@ try {
 
 	for (x in capList) {
 
-		if (x > 10) {
+		if (x > 20) {
 			break;
 		}
 
