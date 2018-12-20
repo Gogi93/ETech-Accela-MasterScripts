@@ -149,17 +149,17 @@ try {
 
 	for (x in capList) {
 
-		if (x > 20) {
-			break;
-		}
+		//if (x > 20) {
+		//	break;
+		//}
 
 		logMessage("Time Check 1 : " + elapsed() + " Seconds");
 
-		if (x % 10 === 0) {
+		if (x % 500 === 0) {
 			aa.sendMail("noReply@accela.com", "ewylam@etechconsultingllc.com", "", batchJobName + " Progress Results : " + x, message);
 		}
 
-		logMessage("Time Check 2 : " + elapsed() + " Seconds");
+		//logMessage("Time Check 2 : " + elapsed() + " Seconds");
 
 		cap = capList[x];
 		capId = cap.getCapID();
@@ -202,7 +202,7 @@ try {
 			//emailContacts_BCC("All", vEmailTemplate, vEParams, vReportTemplate, vRParams);
 			var vReportName = generateReportForEmail(capId, vReportTemplate, aa.getServiceProviderCode(), vRParams);
 
-			logMessage("Time Check 3 : " + elapsed() + " Seconds");
+			//logMessage("Time Check 3 : " + elapsed() + " Seconds");
 
 			if (vReportName != false) {
 				//Remove Contact
@@ -213,7 +213,7 @@ try {
 					var vRemCnt = 0;
 				vContactObjs = getContactObjs_Batch(capId, "Beneficial Interest - Individual");
 
-				logMessage("Time Check 4 : " + elapsed() + " Seconds");
+				//logMessage("Time Check 4 : " + elapsed() + " Seconds");
 
 				vTotCnt = vTotCnt + vContactObjs.length;
 				for (y in vContactObjs) {
@@ -221,12 +221,12 @@ try {
 					if (vContactObj != false && vContactObj != null) {
 						vRemoveResult = aa.people.removeCapContact(capId, vContactObj.seqNumber); // About 3 Sec
 						if (vRemoveResult.getSuccess() == true) {
-							logMessage("Time Check 5.1 : " + elapsed() + " Seconds");
+							//logMessage("Time Check 5.1 : " + elapsed() + " Seconds");
 							vRemCnt = vRemCnt + 1;
 							//logMessage("Successfully removed Beneficial Interest - Individual contact from record: " + capId.getCustomID());
 						}
 						else {
-							logMessage("Time Check 5.2 : " + elapsed() + " Seconds");
+							//logMessage("Time Check 5.2 : " + elapsed() + " Seconds");
 							logMessage("Error removing contact: " + vRemoveResult.getErrorMessage());
 						}
 					}
@@ -234,7 +234,7 @@ try {
 				y = 0;
 				vContactObjs = getContactObjs_Batch(capId, "Beneficial Interest - Organization");
 
-				logMessage("Time Check 6 : " + elapsed() + " Seconds");
+				//logMessage("Time Check 6 : " + elapsed() + " Seconds");
 
 				vTotCnt = vTotCnt + vContactObjs.length;
 				for (y in vContactObjs) {
@@ -242,19 +242,19 @@ try {
 					if (vContactObj != false && vContactObj != null) {
 						vRemoveResult = aa.people.removeCapContact(capId, vContactObj.seqNumber); // About 3 Sec
 						if (vRemoveResult.getSuccess() == true) {
-							logMessage("Time Check 7.1 : " + elapsed() + " Seconds");
+							//logMessage("Time Check 7.1 : " + elapsed() + " Seconds");
 							vRemCnt = vRemCnt + 1;
 							//logMessage("Successfully removed Beneficial Interest - Individual contact from record: " + capId.getCustomID());
 						}
 						else {
-							logMessage("Time Check 7.2 : " + elapsed() + " Seconds");
+							//logMessage("Time Check 7.2 : " + elapsed() + " Seconds");
 							logMessage("Error removing contact: " + vRemoveResult.getErrorMessage());
 						}
 					}
 				}
 				logMessage("-Removed " + vRemCnt + " of " + vTotCnt + " contacts for record: " + capId.getCustomID());
 
-				logMessage("Time Check 8 : " + elapsed() + " Seconds");
+				//logMessage("Time Check 8 : " + elapsed() + " Seconds");
 
 			}
 		}
@@ -285,12 +285,12 @@ if (debug.indexOf("**ERROR") > 0) {
 | <===========Internal Functions and Classes (Used by this script)
 /------------------------------------------------------------------------------------------------------*/
 function generateReportForEmail(itemCap, reportName, module, parameters) {
-logMessage(" Report Time Check 1 : " + elapsed() + " Seconds");
+//logMessage(" Report Time Check 1 : " + elapsed() + " Seconds");
 	//returns the report file which can be attached to an email.
 	var vAltId;
 	var user = currentUserID; // Setting the User Name
 	var report = aa.reportManager.getReportInfoModelByName(reportName);
-logMessage(" Report Time Check 2 : " + elapsed() + " Seconds");	
+//logMessage(" Report Time Check 2 : " + elapsed() + " Seconds");	
 	var permit;
 	var reportResult;
 	var reportOutput;
@@ -302,12 +302,12 @@ logMessage(" Report Time Check 2 : " + elapsed() + " Seconds");
 
 	vAltId = itemCap.getCustomID();
 	report.getEDMSEntityIdModel().setAltId(vAltId);
-logMessage(" Report Time Check 3 : " + elapsed() + " Seconds");
+//logMessage(" Report Time Check 3 : " + elapsed() + " Seconds");
 	permit = aa.reportManager.hasPermission(reportName, user);
-logMessage(" Report Time Check 4 : " + elapsed() + " Seconds");	
+//logMessage(" Report Time Check 4 : " + elapsed() + " Seconds");	
 	if (permit.getOutput().booleanValue()) {
 		reportResult = aa.reportManager.getReportResult(report);
-logMessage(" Report Time Check 5 : " + elapsed() + " Seconds");		
+//logMessage(" Report Time Check 5 : " + elapsed() + " Seconds");		
 		if (!reportResult.getSuccess()) {
 			logDebug("System failed get report: " + reportResult.getErrorType() + ":" + reportResult.getErrorMessage());
 			return false;
@@ -315,7 +315,7 @@ logMessage(" Report Time Check 5 : " + elapsed() + " Seconds");
 			reportOutput = reportResult.getOutput();
 			vReportName = reportOutput.getName();
 			logMessage("Report " + vReportName + " generated for record " + itemCap.getCustomID() + ". " + parameters);
-logMessage(" Report Time Check 6 : " + elapsed() + " Seconds");			
+//logMessage(" Report Time Check 6 : " + elapsed() + " Seconds");			
 			return vReportName;
 		}
 	} else {
