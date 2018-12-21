@@ -136,10 +136,13 @@ var batchJobName = "" + aa.env.getValue("batchJobName");
 // Ex. var appGroup = getParam("Group");
 //
 try {
+	logMessage("Start Time: " + elapsed() + " Seconds");
 	var capList = aa.cap.getByAppType("License", "Retail License", null, "License").getOutput();
 	var cap;
 	var capId;
 	var x = 0;
+	var vUpdated = 0;
+	var vNotUpdated = 0;
 	//var vGoodStatuses = ["Active","About to Expire"];
 
 	//showDebug = true;
@@ -209,8 +212,8 @@ try {
 				var vContactObjs = [];
 				var vContactObj;
 				var y = 0;
-				var vTotCnt = 0
-					var vRemCnt = 0;
+				var vTotCnt = 0;
+				var vRemCnt = 0;
 				vContactObjs = getContactObjs_Batch(capId, "Beneficial Interest - Individual");
 
 				//logMessage("Time Check 4 : " + elapsed() + " Seconds");
@@ -224,8 +227,7 @@ try {
 							//logMessage("Time Check 5.1 : " + elapsed() + " Seconds");
 							vRemCnt = vRemCnt + 1;
 							//logMessage("Successfully removed Beneficial Interest - Individual contact from record: " + capId.getCustomID());
-						}
-						else {
+						} else {
 							//logMessage("Time Check 5.2 : " + elapsed() + " Seconds");
 							logMessage("Error removing contact: " + vRemoveResult.getErrorMessage());
 						}
@@ -245,22 +247,29 @@ try {
 							//logMessage("Time Check 7.1 : " + elapsed() + " Seconds");
 							vRemCnt = vRemCnt + 1;
 							//logMessage("Successfully removed Beneficial Interest - Individual contact from record: " + capId.getCustomID());
-						}
-						else {
+						} else {
 							//logMessage("Time Check 7.2 : " + elapsed() + " Seconds");
 							logMessage("Error removing contact: " + vRemoveResult.getErrorMessage());
 						}
 					}
 				}
-				logMessage("-Removed " + vRemCnt + " of " + vTotCnt + " contacts for record: " + capId.getCustomID());
 
+				if (vRemCnt > 0) {
+					logMessage("-Removed " + vRemCnt + " of " + vTotCnt + " contacts for record: " + capId.getCustomID());
+					vUpdated++;
+				} else {
+					vNotUpdated++;
+				}
 				//logMessage("Time Check 8 : " + elapsed() + " Seconds");
-
+			} else {
+				vNotUpdated++;
 			}
 		}
 	}
 
-	//logMessage("Time Check 9 : " + elapsed() + " Seconds");
+	logMessage("Updated: " + vUpdated);
+	logMessage("Not Updated: " + vNotUpdated);
+	logMessage("End Time: " + elapsed() + " Seconds");
 
 } catch (e) {
 	logDebug("Error: " + e);
@@ -285,12 +294,12 @@ if (debug.indexOf("**ERROR") > 0) {
 | <===========Internal Functions and Classes (Used by this script)
 /------------------------------------------------------------------------------------------------------*/
 function generateReportForEmail(itemCap, reportName, module, parameters) {
-//logMessage(" Report Time Check 1 : " + elapsed() + " Seconds");
+	//logMessage(" Report Time Check 1 : " + elapsed() + " Seconds");
 	//returns the report file which can be attached to an email.
 	var vAltId;
 	var user = currentUserID; // Setting the User Name
 	var report = aa.reportManager.getReportInfoModelByName(reportName);
-//logMessage(" Report Time Check 2 : " + elapsed() + " Seconds");	
+	//logMessage(" Report Time Check 2 : " + elapsed() + " Seconds");
 	var permit;
 	var reportResult;
 	var reportOutput;
@@ -302,12 +311,12 @@ function generateReportForEmail(itemCap, reportName, module, parameters) {
 
 	vAltId = itemCap.getCustomID();
 	report.getEDMSEntityIdModel().setAltId(vAltId);
-//logMessage(" Report Time Check 3 : " + elapsed() + " Seconds");
+	//logMessage(" Report Time Check 3 : " + elapsed() + " Seconds");
 	permit = aa.reportManager.hasPermission(reportName, user);
-//logMessage(" Report Time Check 4 : " + elapsed() + " Seconds");	
+	//logMessage(" Report Time Check 4 : " + elapsed() + " Seconds");
 	if (permit.getOutput().booleanValue()) {
 		reportResult = aa.reportManager.getReportResult(report);
-//logMessage(" Report Time Check 5 : " + elapsed() + " Seconds");		
+		//logMessage(" Report Time Check 5 : " + elapsed() + " Seconds");
 		if (!reportResult.getSuccess()) {
 			logDebug("System failed get report: " + reportResult.getErrorType() + ":" + reportResult.getErrorMessage());
 			return false;
@@ -315,7 +324,7 @@ function generateReportForEmail(itemCap, reportName, module, parameters) {
 			reportOutput = reportResult.getOutput();
 			vReportName = reportOutput.getName();
 			logMessage("Report " + vReportName + " generated for record " + itemCap.getCustomID() + ". " + parameters);
-//logMessage(" Report Time Check 6 : " + elapsed() + " Seconds");			
+			//logMessage(" Report Time Check 6 : " + elapsed() + " Seconds");
 			return vReportName;
 		}
 	} else {
