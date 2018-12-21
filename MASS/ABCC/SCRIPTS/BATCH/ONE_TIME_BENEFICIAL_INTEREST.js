@@ -136,7 +136,7 @@ var batchJobName = "" + aa.env.getValue("batchJobName");
 // Ex. var appGroup = getParam("Group");
 //
 try {
-	var capList = aa.cap.getByAppType("License", "Retail License", "", "License").getOutput();
+	var capList = aa.cap.getByAppType("License", "Retail License", null, "License").getOutput();
 	var cap;
 	var capId;
 	var x = 0;
