@@ -136,7 +136,7 @@ var batchJobName = "" + aa.env.getValue("batchJobName");
 // Ex. var appGroup = getParam("Group");
 //
 try {
-	var capList = aa.cap.getByAppType("License", "Retail License", "Retail", "Application").getOutput();
+	var capList = aa.cap.getByAppType("License", "Retail License", "", "License").getOutput();
 	var cap;
 	var capId;
 	var x = 0;
@@ -153,7 +153,7 @@ try {
 		//	break;
 		//}
 
-		logMessage("Time Check 1 : " + elapsed() + " Seconds");
+		//logMessage("Time Check 1 : " + elapsed() + " Seconds");
 
 		if (x % 500 === 0) {
 			aa.sendMail("noReply@accela.com", "ewylam@etechconsultingllc.com", "", batchJobName + " Progress Results : " + x, message);
@@ -260,7 +260,7 @@ try {
 		}
 	}
 
-	logMessage("Time Check 9 : " + elapsed() + " Seconds");
+	//logMessage("Time Check 9 : " + elapsed() + " Seconds");
 
 } catch (e) {
 	logDebug("Error: " + e);
