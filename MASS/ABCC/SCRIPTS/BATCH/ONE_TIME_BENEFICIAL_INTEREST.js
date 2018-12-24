@@ -137,7 +137,7 @@ var batchJobName = "" + aa.env.getValue("batchJobName");
 //
 try {
 	logMessage("Start Time: " + elapsed() + " Seconds");
-	var capList = aa.cap.getByAppType("License", "Retail License", null, "License").getOutput();
+	var capList = aa.cap.getByAppType("License", "State License", null, "License").getOutput();
 	var cap;
 	var capId;
 	var x = 0;
