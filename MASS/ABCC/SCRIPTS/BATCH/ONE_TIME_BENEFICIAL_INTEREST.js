@@ -270,7 +270,7 @@ try {
 	logMessage("Updated: " + vUpdated);
 	logMessage("Not Updated: " + vNotUpdated);
 	logMessage("End Time: " + elapsed() + " Seconds");
-
+	aa.sendMail("noReply@accela.com", "ewylam@etechconsultingllc.com", "", batchJobName + " Complete : " + x, message);
 } catch (e) {
 	logDebug("Error: " + e);
 }
