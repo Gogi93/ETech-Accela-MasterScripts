@@ -251,7 +251,7 @@ function copyAppSpecificInfo(srcCapId, targetCapId) {
 	//2. Set target CAPID to source Specific Information.
 	for (loopk in appSpecificInfo) {
 		var sourceAppSpecificInfoModel = appSpecificInfo[loopk];
-		if ((sourceAppSpecificInfoModel.getCheckboxDesc() != "eSignature" || sourceAppSpecificInfoModel.getCheckboxDesc() != "Signature" || sourceAppSpecificInfoModel.getCheckboxDesc() != "Electronic Signature") && sourceAppSpecificInfoModel.getCheckboxDesc() != "Title") {
+		if (sourceAppSpecificInfoModel.getCheckboxDesc() != "eSignature" && sourceAppSpecificInfoModel.getCheckboxDesc() != "Signature" && sourceAppSpecificInfoModel.getCheckboxDesc() != "Electronic Signature" && sourceAppSpecificInfoModel.getCheckboxDesc() != "Title") {
 			sourceAppSpecificInfoModel.setPermitID1(targetCapId.getID1());
 			sourceAppSpecificInfoModel.setPermitID2(targetCapId.getID2());
 			sourceAppSpecificInfoModel.setPermitID3(targetCapId.getID3());
