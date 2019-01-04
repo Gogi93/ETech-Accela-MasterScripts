@@ -8,15 +8,16 @@
 //Promote contacts to Reference and sync
 //Handle the addition of contacts to Reference
 
-
-if (publicUser) {
-	if (appMatch("License/*/*/Application")) {
+// ETW - 12/20/18 - Begin Defect EPAWS-997
+// if (publicUser) {
+	// if (appMatch("License/*/*/Application")) {
 		// createRefContactsFromCapContactsAndLinkForMA(capId,null,null,false,true,peopleDuplicateCheck);
 
-	} else {
-		//createRefContactsFromCapContactsAndLinkForMA(capId, null, null, false,false, peopleDuplicateCheck);
-	}
-}
+	// } else {
+		// createRefContactsFromCapContactsAndLinkForMA(capId, null, null, false,false, peopleDuplicateCheck);
+	// }
+// }
+// ETW - 12/20/18 - End Defect EPAWS-997
 /*
  *
  * This function will auto assign a task to a user in a department based on a round robin methodology
