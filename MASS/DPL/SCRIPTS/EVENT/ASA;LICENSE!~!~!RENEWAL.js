@@ -84,12 +84,12 @@ if (vParentCapID) {
 		// Commented out by JCollado - Contact Copy w/Address now occurs in APPLICATIONSUBMITAFTER4RENEW
 		//Uncommented by Aditi for defect 10265. Code has not been moved to APPLICATIONSUBMITAFTER4RENEW.
 
-		// Begin - ETW - EPAWS-946, commented out to remove duplicate address defect
+		// Begin - ETW - EPAWS-946, EPAWS-1010, commented out to remove duplicate address defect
 		//if (vParentCapID) {
 		//	removeContactsFromCap(capId);
 		//	copyContactsWithAddress(vParentCapID, capId);
 		//}
-		// Begin - ETW - EPAWS-946
+		// Begin - ETW - EPAWS-946, EPAWS-1010
 	}
 }
 
