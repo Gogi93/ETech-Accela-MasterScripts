@@ -92,7 +92,7 @@ loadAppSpecific4ACA(AInfo);
 | <===========Main=Loop================>
 |
 /-----------------------------------------------------------------------------------------------------*/
-var asiApplicationType = AInfo["Add or Remove Associated Licenses:"];
+var asiApplicationType = AInfo["Add or Remove Associated Licenses"];
 if (asiApplicationType == "YES" || asiApplicationType == "Y" || asiApplicationType == "CHECKED" || asiApplicationType == "SELECTED" || asiApplicationType == "TRUE" || asiApplicationType == "ON") {
    aa.env.setValue("ReturnData", "{'PageFlow': {'StepNumber': '3', 'PageNumber':'1'}}");
 }
