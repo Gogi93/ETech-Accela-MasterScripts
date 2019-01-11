@@ -9,14 +9,16 @@
 //Handle the addition of contacts to Reference
 
 // ETW - 12/20/18 - Begin Defect EPAWS-997
-// if (publicUser) {
-	// if (appMatch("License/*/*/Application")) {
-		// createRefContactsFromCapContactsAndLinkForMA(capId,null,null,false,true,peopleDuplicateCheck);
+ if (publicUser) {
+	 if (appMatch("License/*/*/Application")) {
+		//createRefContactsFromCapContactsAndLinkForMA(capId,null,null,false,true,peopleDuplicateCheck);
+		createRefContactsFromCapContactsAndLink(capId, null, null, false, true, peopleDuplicateCheck);
 
-	// } else {
+	 } else {
 		// createRefContactsFromCapContactsAndLinkForMA(capId, null, null, false,false, peopleDuplicateCheck);
-	// }
-// }
+		createRefContactsFromCapContactsAndLink(capId, null, null, false, true, peopleDuplicateCheck);
+	 }
+ }
 // ETW - 12/20/18 - End Defect EPAWS-997
 /*
  *
