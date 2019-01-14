@@ -142,6 +142,53 @@ if (!publicUser) {
 }
 //-------------------------------- END ------------------------------------------------
 
+// Begin - ETW - EPAWS-1194, updated to not save "Submitted" status for TMP records
+if (capId.getCustomID().indexOf("TMP") != -1 || capId.getCustomID().indexOf("EST") != -1) {
+	editCapStatus(capId, "");
+}
+
+function editCapStatus(pCapId, pStatus) {
+	var vCap = aa.cap.getCap(pCapId);
+	var vSaveResult;
+	if (!vCap.getSuccess()) {
+		return false;
+	} else {
+		vCap = vCap.getOutput().getCapModel();
+		vCap.setCapStatus(pStatus);
+		vSaveResult = aa.cap.editCapByPK(vCap);
+		if (!vSaveResult.getSuccess()) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+}
+
+
+function getRecordStatus(pCapId) {
+	var recordStatusResult = aa.cap.getCap(pCapId);
+	if (!recordStatusResult.getSuccess()) {
+		logDebug("**ERROR: Failed to get record status: " + recordStatusResult.getErrorMessage()); 
+		return false;
+	}
+		
+	var recordStatusObj = recordStatusResult.getOutput();
+
+	if (!recordStatusObj) {
+		logDebug("**ERROR: No cap script object");
+		return false;
+	}
+	var cd = recordStatusObj.getCapModel();
+	var recordStatus = cd.getCapStatus();
+	if(recordStatus != null) {
+		return recordStatus;
+	}
+	else {
+		return "";
+	}
+}
+
+// End - ETW - EPAWS-1194, updated to not save "Submitted" status for TMP records
 
 function removeContactsFromCap(recordCapId) {
 
