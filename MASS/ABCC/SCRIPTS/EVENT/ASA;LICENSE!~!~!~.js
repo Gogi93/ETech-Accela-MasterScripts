@@ -16,7 +16,14 @@ if (!appMatch("License/Retail License/LLA Review/Renewal")) {
 			createRefContactsFromCapContactsAndLink(capId, null, null, false, true, peopleDuplicateCheck);
 			// ETW - 12/20/18 - End Defect EPAWS-997
 
-		} else {
+		} else if (appMatch("License/*/*/Amendment")) {
+			// ETW - 12/20/18 - Begin Defect EPAWS-997
+			//createRefContactsFromCapContactsAndLinkForMA(capId,null,null,false,true, peopleDuplicateCheck);
+			createRefContactsFromCapContactsAndLink(capId, null, null, false, true, peopleDuplicateCheck);
+			setContactsSyncFlag("N", capId);
+			// ETW - 12/20/18 - End Defect EPAWS-997
+		}
+		else {
 			// ETW - 12/20/18 - Begin Defect EPAWS-997
 			//createRefContactsFromCapContactsAndLinkForMA(capId,null,null,false,true, peopleDuplicateCheck);
 			createRefContactsFromCapContactsAndLink(capId, null, null, false, true, peopleDuplicateCheck);
