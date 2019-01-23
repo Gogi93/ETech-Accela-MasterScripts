@@ -140,7 +140,7 @@ try {
 	var vGroup = "License";
 	var vType = "State License";
 	var vSubType = null;
-	var vCategory = "Amendment";
+	var vCategory = "License";
 	
 	logMessage("Start Time: " + elapsed() + " Seconds");
 	logMessage("Selecting: " + vGroup + " / " + vType + " / " + vSubType + " / " + vCategory);
