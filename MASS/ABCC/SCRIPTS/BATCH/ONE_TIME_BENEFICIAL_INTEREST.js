@@ -139,19 +139,21 @@ try {
 	com.accela.aa.util.WebThreadLocal.setServiceProviderCode("ABCC");
 	
 	logMessage("Start Time: " + elapsed() + " Seconds");
-	var capList = aa.cap.getByAppType("License", "State License", null, "Application").getOutput();
+	var capList = aa.cap.getByAppType("License", "Retail License", null, "Application").getOutput();
 	var cap;
 	var capId;
 	var x = 0;
 	var vUpdated = 0;
 	var vNotUpdated = 0;
+	var vNoContacts = 0;
 	//var vGoodStatuses = ["Active","About to Expire"];
 
 	//showDebug = true;
 	showMessage = true;
 
 	logMessage("Processing " + capList.length + " records.");
-
+	aa.sendMail("noReply@accela.com", "ewylam@etechconsultingllc.com", "", batchJobName + " Started : " + x, message);
+	
 	for (x in capList) {
 
 		//if (x > 20) {
@@ -266,11 +268,14 @@ try {
 			} else {
 				vNotUpdated++;
 			}
+		} else {
+			vNoContacts++;
 		}
 	}
 
 	logMessage("Updated: " + vUpdated);
 	logMessage("Not Updated: " + vNotUpdated);
+	logMessage("No Contacts: " + vNoContacts);
 	logMessage("End Time: " + elapsed() + " Seconds");
 	aa.sendMail("noReply@accela.com", "ewylam@etechconsultingllc.com", "", batchJobName + " Complete : " + x, message);
 } catch (e) {
