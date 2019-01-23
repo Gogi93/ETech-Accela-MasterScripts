@@ -137,9 +137,15 @@ var batchJobName = "" + aa.env.getValue("batchJobName");
 //
 try {
 	com.accela.aa.util.WebThreadLocal.setServiceProviderCode("ABCC");
+	var vGroup = "License";
+	var vType = "Retail License";
+	var vSubType = null;
+	var vCategory = "Application";
 	
 	logMessage("Start Time: " + elapsed() + " Seconds");
-	var capList = aa.cap.getByAppType("License", "Retail License", null, "Application").getOutput();
+	logMessage("Selecting: " + vGroup + " / " + vType + " / " + vSubType + " / " + vCategory);
+	
+	var capList = aa.cap.getByAppType(vGroup, vType, vSubType, vCategory).getOutput();
 	var cap;
 	var capId;
 	var x = 0;
