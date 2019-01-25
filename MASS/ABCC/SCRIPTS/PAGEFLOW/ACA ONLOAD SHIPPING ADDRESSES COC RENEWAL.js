@@ -1,5 +1,5 @@
 var vTableName = "SHIPPING ADDRESS";
-var tmpTable = loadASITable4ACA(vTableName, cap);
+var tmpTable = loadASITable4ACA(vTableName, capId);
 
 if (!tmpTable || tmpTable.length == 0) {
 	var vAddress;
@@ -34,9 +34,9 @@ if (!tmpTable || tmpTable.length == 0) {
 
 	vASITable.push(vASITRow);
 
-	vCapASITGroup = cap.getAppSpecificTableGroupModel();
+	vCapASITGroup = capId.getAppSpecificTableGroupModel();
 	vUpdatedASIT = replaceASITable4ACAPageFlow(vCapASITGroup, vTableName, vASITable);
-	cap.setAppSpecificTableGroupModel(vUpdatedASIT);
+	capId.setAppSpecificTableGroupModel(vUpdatedASIT);
 
-	aa.env.setValue("CapModel", cap);
+	aa.env.setValue("CapModel", capId);
 }
