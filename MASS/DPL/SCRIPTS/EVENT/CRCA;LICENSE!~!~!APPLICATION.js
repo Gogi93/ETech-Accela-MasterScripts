@@ -9,6 +9,14 @@ addDPLApplicationFee();
 
 if (publicUser)
 {
+	if (appMatch("License/Sheet Metal/School/Application")) {
+		var schoolType = getAppSpecific("School Type");
+		
+		if (schoolType != "Public") {
+			removeCapCondition("Application Checklist", "Occupancy Permits");
+		}
+	}
+	
 	if (appMatch("License/Sheet Metal/Apprentice/Application") || appMatch("License/Sheet Metal/Business License/Application"))
 	{
 		addReferenceContactFromMasterLicense();
