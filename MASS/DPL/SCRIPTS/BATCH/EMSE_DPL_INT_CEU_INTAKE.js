@@ -544,8 +544,12 @@ function updateCEUInformation(licenseIDModel, submissionRecordID, queryResult, p
 	// ETW Begin Fix for EPAWS-1391
 	//continuingEducationModel.setGradingStyle("Pass/Fail");
 	continuingEducationModel.setGradingStyle("passfail");
-	continuingEducationModel.setAuditStatus("A");
 	continuingEducationModel.setRequiredFlag("Y");
+	var vAuditModel = continuingEducationModel.getAuditModel();
+	vAuditModel.setAuditID("ADMIN");
+	vAuditModel.setAuditDate(new Date());
+	vAuditModel.setAuditStatus("A") 
+	continuingEducationModel.setAuditModel(vAuditModel);
 	// ETW End Fix fof EPAWS-1391
 
 	//Fix for Defect 5600 : java.lang.null pointer exception getting generated on running the CEU interface for EL Board
