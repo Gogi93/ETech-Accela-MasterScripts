@@ -10,6 +10,148 @@ child of the Parent Record. Record will be assigned to the particular board staf
 record will be deleted from staging table, inserts into error table and an email will be triggered for any
 erroneous record.
  ***********************************************************************************************************************************/
+
+// POC
+var selectQueryObj = {
+	"selectQuery": {
+		"table": "ELP_TBL_CEU_STG_DPL",
+		"parameters": {
+			"list": [{
+					"name": "runDate",
+					"source": "RESULT",
+					"property": "runDate",
+					"type": "DATE_TIME",
+					"parameterType": "IN"
+				}, {
+					"name": "intakeStatus",
+					"source": "RESULT",
+					"property": "intakeStatus",
+					"type": "STRING",
+					"parameterType": "IN"
+				}, {
+					"name": "sp_cursor",
+					"source": "RESULT",
+					"property": "sp_cursor",
+					"type": "ResultSet",
+					"parameterType": "OUT"
+				}
+			]
+		},
+		"resultSet": {
+			"list": [{
+					"name": "rowNumber",
+					"source": "RESULT",
+					"property": "ROW_NUMBER",
+					"type": "INTEGER",
+					"parameterType": "OUT"
+				}, {
+					"name": "batchInterfaceName",
+					"source": "RESULT",
+					"property": "BATCH_INTERFACE_NAME",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "serviceProviderCode",
+					"source": "RESULT",
+					"property": "SERVICE_PROVIDER_CODE",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "transactionGroup",
+					"source": "RESULT",
+					"property": "TRANSACTION_GROUP",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "boardCode",
+					"source": "RESULT",
+					"property": "BOARD_CODE",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "licenseNumber",
+					"source": "RESULT",
+					"property": "LICENSE_NUMBER",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "typeClass",
+					"source": "RESULT",
+					"property": "TYPE_CLASS",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "providerCode",
+					"source": "RESULT",
+					"property": "PROVIDER_CODE",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "dplPin",
+					"source": "RESULT",
+					"property": "DPL_PIN",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "courseDate",
+					"source": "RESULT",
+					"property": "COURSE_DATE",
+					"type": "DATE_TIME",
+					"parameterType": "OUT"
+				}, {
+					"name": "courseName",
+					"source": "RESULT",
+					"property": "COURSE_NAME",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "courseNumber",
+					"source": "RESULT",
+					"property": "COURSE_NUMBER",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "courseHours",
+					"source": "RESULT",
+					"property": "COURSE_HOURS",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "codeCycle",
+					"source": "RESULT",
+					"property": "CODE_CYCLE",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "intakeStatus",
+					"source": "RESULT",
+					"property": "INTAKE_STATUS",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}, {
+					"name": "runDate",
+					"source": "RESULT",
+					"property": "RUN_DATE",
+					"type": "DATE_TIME",
+					"parameterType": "OUT"
+				}, {
+					"name": "dateLoaded",
+					"source": "RESULT",
+					"property": "DATE_LOADED",
+					"type": "DATE_TIME",
+					"parameterType": "OUT"
+				}, {
+					"name": "stgErrorMessage",
+					"source": "RESULT",
+					"property": "STG_ERROR_MESSAGE",
+					"type": "STRING",
+					"parameterType": "OUT"
+				}
+			]
+		}
+	}
+};
+
 try {
 	try {
 		//Import the utility script which contains functions that will be used later
@@ -53,8 +195,12 @@ try {
 	}
 
 	try {
+		// POC
+		var processedCount = countStagingRecords(new Date(batchAppResultObj.runDate));
+
+		// POC
 		// Code to update processed count in the Dynamic table
-		var processedCount = countImportedRecords(new Date(batchAppResultObj.runDate));
+		// var processedCount = countImportedRecords(new Date(batchAppResultObj.runDate));
 		ELPLogging.debug("Processed Count : " + processedCount);
 
 		updateDynamicParams(processedCount);
@@ -87,14 +233,22 @@ try {
 	var dataSetStg = null;
 
 	try {
-		//Query staging table based on intake status as "EXTRACTED_FILE".
-		//IN parameters to the query stored procedure
+		// POC
 		var emseQueryParameters = {
-			"intakeStatus": "EXTRACTED_FILE"
+			"intakeStatus": "EXTRACTED_FILE",
+			"tableName": selectQueryObj.selectQuery.table
 		};
-		//Querying staging table
-		dataSetStg = queryStgRecord(emseQueryParameters);
-	} catch (ex if ex instanceof StoredProcedureException) {
+
+		dataSetStg = getStgRecords(emseQueryParameters);
+
+		// POC
+		// //Query staging table based on intake status as "EXTRACTED_FILE".
+		// //IN parameters to the query stored procedure
+		// var emseQueryParameters = {"intakeStatus":"EXTRACTED_FILE" };
+		// //Querying staging table
+		// dataSetStg = queryStgRecord(emseQueryParameters);
+	} catch (ex
+		if ex instanceof StoredProcedureException) {
 		returnException = new ELPAccelaEMSEException("Error querying Staging Table Records: " + ex.message, ScriptReturnCodes.STAGING_PROCEDURE);
 		ELPLogging.fatal(" Fatal Error " + returnException.toString());
 		throw returnException;
@@ -198,7 +352,8 @@ try {
 					deleteStgRecord(emseDeleteParameters);
 				}
 			}
-		} catch (ex if ex instanceof StoredProcedureException) {
+		} catch (ex
+			if ex instanceof StoredProcedureException) {
 			var recordID = queryResult.licenseNumber + "-" + queryResult.boardCode + "-" + queryResult.typeClass;
 			ELPLogging.debug("Stored procedure exception occurred when trying to update record : " + recordID + " **ERRORS : " + ex.message);
 
@@ -236,7 +391,8 @@ try {
 
 	//Triggering mail for erroneous record.
 	emailErrorReport(dbConn, stagingConfigObj, RUN_DATE);
-} catch (ex if ex instanceof ELPAccelaEMSEException) {
+} catch (ex
+	if ex instanceof ELPAccelaEMSEException) {
 	ELPLogging.debug(ex.message);
 	ELPLogging.fatal(ex.toString());
 	aa.env.setValue("EMSEReturnCode", ex.getReturnCode());
@@ -393,12 +549,21 @@ function validateProviderCode(providerCode) {
 	}
 	if (queryProcedure) {
 		try {
-			queryProcedure.prepareStatement();
-			var inputParameters = queryProcedure.prepareParameters(staticParamObj, dynamicParamObj, batchAppResultObj);
-			queryProcedure.setParameters(inputParameters);
-			//Query for fetching the records from the view
-			var dataSetFromView = queryProcedure.queryProcedure();
-			queryProcedure.close();
+			// POC
+			// queryProcedure.prepareStatement();
+			// var inputParameters = queryProcedure.prepareParameters(staticParamObj, dynamicParamObj, batchAppResultObj);
+			// queryProcedure.setParameters(inputParameters);
+			// //Query for fetching the records from the view
+			// var dataSetFromView = queryProcedure.queryProcedure();
+			// queryProcedure.close();
+
+			// POC
+			var parameters = {
+				"tableName": "RPROVIDER"
+			};
+
+			var dataSetFromView = getProviderCode(queryProcedure, parameters);
+
 			var providerFields = "";
 			//Perform validation for provider code
 			while (providerFields = dataSetFromView.next()) {
@@ -1193,16 +1358,26 @@ function emailErrorReport(dbConnection, procedureConfiguration, runDate) {
 	try {
 		ELPLogging.debug("*** Start getErrorReportRecords() ***");
 
-		var parameters = {};
-		parameters.runDate = runDate;
-		parameters.batchInterfaceName = "ELP.DPL.CEU.INTAKE";
-		errorReportProcedure.prepareStatement();
-		var inputParameters = errorReportProcedure.prepareParameters(null, null, parameters);
-		ELPLogging.debug("Input parameters for error report procedure: ", inputParameters);
+		// POC
+		// var parameters = {};
+		// parameters.runDate = runDate;
+		// parameters.batchInterfaceName = "ELP.DPL.CEU.INTAKE";
+		// errorReportProcedure.prepareStatement();
+		// var inputParameters = errorReportProcedure.prepareParameters(null,null,parameters);
+		// ELPLogging.debug("Input parameters for error report procedure: ", inputParameters);
 
-		errorReportProcedure.setParameters(inputParameters);
-		var dataSet = errorReportProcedure.queryProcedure();
-		ELPLogging.debug("*** Finished getLicenseConfigurationRecords() ***");
+		// errorReportProcedure.setParameters(inputParameters);
+		// var dataSet = errorReportProcedure.queryProcedure();
+
+		// POC
+		var parameters = {
+			"runDate": runDate,
+			"batchInterfaceName": "ELP.DPL.CEU.INTAKE",
+			"tableName": "ELP_VW_PSI_ERROR"
+		};
+		var dataSet = getErrorReportRecords(errorReportProcedure, parameters);
+
+		ELPLogging.debug("*** Finished getErrorReportRecords() ***");
 
 		// loop through all license configuration records
 		var licenseConfiguration = null;
@@ -1638,7 +1813,8 @@ function duplicateRecordCheck(queryResult) {
 		"providerCode": queryResult.providerCode,
 		"courseName": queryResult.courseName,
 		"courseDate": queryResult.courseDate,
-		"courseNumber": queryResult.courseNumber
+		"courseNumber": queryResult.courseNumber,
+		"duplicateFlag": false
 	};
 	try {
 		var duplicateCheckResult = callToStoredProcedure(emseDupCheckParameters, "duplicateRecordCheck");
@@ -1758,4 +1934,135 @@ function getScriptText(vScriptName) {
 	var emseBiz = aa.proxyInvoker.newInstance("com.accela.aa.emse.emse.EMSEBusiness").getOutput();
 	var emseScript = emseBiz.getScriptByPK(aa.getServiceProviderCode(), vScriptName, "ADMIN");
 	return emseScript.getScriptText() + "";
+}
+
+function countStagingRecords(runDate) {
+	var count = 0;
+	var startDate = new Date();
+	var startTime = startDate.getTime();
+	try {
+		var array = [];
+		var tableName = selectQueryObj.selectQuery.table;
+
+		var stagingQueryParameters = {
+			"runDate": runDate,
+			"tableName": tableName
+		};
+
+		var dataSet = getStgRecords(stagingQueryParameters);
+
+		var queryResult = null;
+		while ((queryResult = dataSet.next()) != null) {
+			count++;
+		}
+
+	} catch (ex) {
+		ELPLogging.error("**ERROR: In function " + arguments.callee.toString().match(/function ([^\(]+)/)[1] + ", line: " + ex.lineNumber + " - " + ex.message + "\r" + ex.stack);
+	}
+	ELPLogging.debug("**INFO: Elapsed time counting records: " + elapsed(startTime) + " secs.");
+	return count;
+}
+
+function getStgRecords(parameters) {
+	ELPLogging.debug("**INFO: getStgRecords.");
+	var dataSet = null;
+	var startDate = new Date();
+	var startTime = startDate.getTime();
+	try {
+
+		for (p in parameters) {
+			ELPLogging.debug("**INFO: " + p + ": " + parameters[p]);
+		}
+
+		if (parameters["intakeStatus"] && parameters["runDate"]) {
+			ELPLogging.debug("**ERROR: Parameters can't be null.");
+			return null;
+		}
+
+		var stmt = null;
+		var sql = "select * from " + parameters["tableName"];
+
+		if (parameters["runDate"] != null) {
+			sql += " WHERE RUN_DATE = ?";
+			stmt = dbConn.prepareStatement(sql);
+			var sql_date = new java.sql.Timestamp(parameters["runDate"].getTime());
+			stmt.setTimestamp(1, sql_date);
+		} else {
+			sql += " WHERE Intake_Status = ?";
+			stmt = dbConn.prepareStatement(sql);
+			stmt.setString(1, parameters["intakeStatus"]);
+		}
+
+		ELPLogging.debug("** SQL: " + sql);
+		var rs = stmt.executeQuery();
+
+		var queryProcedure = new StoredProcedure(selectQueryObj.selectQuery, dbConn);
+		var ds = new DataSet(rs, queryProcedure.procedure.resultSet, queryProcedure);
+
+		dataSet = ds;
+
+	} catch (ex) {
+		ELPLogging.debug("**ERROR: In function " + arguments.callee.toString().match(/function ([^\(]+)/)[1] + ", line: " + ex.lineNumber + " - " + ex.message + "\r" + ex.stack);
+	}
+	ELPLogging.debug("**INFO: Elapsed time retrieving records: " + elapsed(startTime) + " secs.");
+	return dataSet;
+}
+
+function elapsed(startTime) {
+	var thisDate = new Date();
+	var thisTime = thisDate.getTime();
+	return ((thisTime - startTime) / 1000);
+}
+
+function getProviderCode(queryProcedure, parameters) {
+	var dataSet = null;
+	try {
+
+		for (p in parameters) {
+			ELPLogging.debug("**INFO: " + p + ": " + parameters[p]);
+		}
+
+		var stmt = null;
+		var sql = "select PROVIDER_NAME, PROVIDER_NO from " + parameters["tableName"];
+		ELPLogging.debug("**SQL: " + sql);
+
+		stmt = dbConn.prepareStatement(sql);
+		var rs = stmt.executeQuery();
+
+		var ds = new DataSet(rs, queryProcedure.procedure.resultSet, queryProcedure);
+
+		dataSet = ds;
+
+	} catch (ex) {
+		ELPLogging.error("**ERROR: In function " + arguments.callee.toString().match(/function ([^\(]+)/)[1] + ", line: " + ex.lineNumber + " - " + ex.message + "\r" + ex.stack);
+	}
+	return dataSet;
+}
+
+function getErrorReportRecords(queryProcedure, parameters) {
+	var dataSet = null;
+	try {
+
+		for (p in parameters) {
+			ELPLogging.debug("**INFO: " + p + ": " + parameters[p]);
+		}
+
+		var stmt = null;
+		var sql = "select * from " + parameters["tableName"] + " where batchInterfaceName = ? and run_date = ?";
+		stmt = dbConn.prepareStatement(sql);
+		stmt.setString(1, parameters["batchInterfaceName"]);
+		var sql_date = new java.sql.Timestamp(parameters["runDate"].getTime());
+		stmt.setTimestamp(2, sql_date);
+
+		var rs = stmt.executeQuery();
+
+		ELPLogging.debug("**SQL: " + sql);
+		var ds = new DataSet(rs, queryProcedure.procedure.resultSet, queryProcedure);
+
+		dataSet = ds;
+
+	} catch (ex) {
+		ELPLogging.error("**ERROR: In function " + arguments.callee.toString().match(/function ([^\(]+)/)[1] + ", line: " + ex.lineNumber + " - " + ex.message + "\r" + ex.stack);
+	}
+	return dataSet;
 }
