@@ -42,5 +42,5 @@ try {
 	
 	
 } catch (err) {
-	logDebug("Error in GENERIC_ASYNC : " + err.message);
+	aa.print("Error in GENERIC_ASYNC : " + err.message);
 }

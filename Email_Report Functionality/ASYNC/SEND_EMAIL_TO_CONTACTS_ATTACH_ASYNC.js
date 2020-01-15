@@ -279,5 +279,5 @@ try {
 		addAdHocTaskAssignDept(vAdHocProcess, vAdHocTask, vAdHocNote, vAdHocAssignDept);
 	}
 } catch (err) {
-	logDebug("Error in SEND_EMAIL_TO_CONTACTS_ATTACH_ASYNC : " + err.message);
+	aa.print("Error in SEND_EMAIL_TO_CONTACTS_ATTACH_ASYNC : " + err.message);
 }
