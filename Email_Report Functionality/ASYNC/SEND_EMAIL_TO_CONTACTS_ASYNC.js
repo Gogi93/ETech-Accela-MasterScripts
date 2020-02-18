@@ -48,6 +48,7 @@ try {
 	var vEParamsToSend;
 	var vModule;
 	var vEmailResult;
+	var currentUserID = "ADMIN";
 
 	//Start modification to support batch script, if not batch then grab globals, if batch do not.
 	if (aa.env.getValue("eventType") != "Batch Process") {
